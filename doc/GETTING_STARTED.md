@@ -10,7 +10,7 @@ ls `pg_config --libdir`/pgexporter_ext*
 You should see
 
 ```
-/path/to/postgresql/lib/pgexporter_ext.so  /path/to/postgresql/lib/pgexporter_ext.so.0.1.0
+/path/to/postgresql/lib/pgexporter_ext.so  /path/to/postgresql/lib/pgexporter_ext.so.0.1.1
 ```
 
 If you don't have `pgexporter_ext` installed see [README](../README.md) on how to
