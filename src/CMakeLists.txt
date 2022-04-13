@@ -6,6 +6,36 @@ FILE(GLOB HEADER_FILES "include/*.h")
 
 set(SOURCES ${SOURCE_FILES} ${HEADER_FILES})
 
+execute_process(COMMAND pg_config --includedir
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                OUTPUT_VARIABLE EXT_INCLUDE_DIR)
+
+if (EXT_INCLUDE_DIR)
+  message(STATUS "Include directory: ${EXT_INCLUDE_DIR}")
+else (EXT_INCLUDE_DIR)
+  message(FATAL_ERROR "pg_config --includedir failed")
+endif (EXT_INCLUDE_DIR)
+
+execute_process(COMMAND pg_config --includedir-server
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                OUTPUT_VARIABLE EXT_INCLUDE_SERVER_DIR)
+
+if (EXT_INCLUDE_SERVER_DIR)
+  message(STATUS "Include directory: ${EXT_INCLUDE_SERVER_DIR}")
+else (EXT_INCLUDE_SERVER_DIR)
+  message(FATAL_ERROR "pg_config --includedir-server failed")
+endif (EXT_INCLUDE_SERVER_DIR)
+
+execute_process(COMMAND pg_config --libdir
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                OUTPUT_VARIABLE EXT_LIB_DIR)
+
+if (EXT_LIB_DIR)
+  message(STATUS "Library directory: ${EXT_LIB_DIR}")
+else (EXT_LIB_DIR)
+  message(FATAL_ERROR "pg_config --libdir failed")
+endif (EXT_LIB_DIR)
+
 #
 # OS
 #
@@ -19,14 +49,15 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   #
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${PostgreSQL_INCLUDE_DIRS}
+    ${EXT_INCLUDE_DIR}
+    ${EXT_INCLUDE_SERVER_DIR}
   )
 
   #
   # Library directories
   #
   link_libraries(
-    ${PostgreSQL_LIBRARIES}
+    ${EXT_LIB_DIR}/libpq.so
   )
 
 else()
@@ -41,14 +72,15 @@ else()
   #
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${PostgreSQL_INCLUDE_DIRS}
+    ${EXT_INCLUDE_DIR}
+    ${EXT_INCLUDE_SERVER_DIR}
   )
 
   #
   # Library directories
   #
   link_libraries(
-    ${PostgreSQL_LIBRARIES}
+    ${EXT_LIB_DIR}/libpq.so
   )
 endif()
 
@@ -144,16 +176,6 @@ if (CMAKE_BUILD_TYPE MATCHES Release OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
   endif()
 endif (CMAKE_BUILD_TYPE MATCHES Release OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
 
-execute_process(COMMAND pg_config --libdir
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-                OUTPUT_VARIABLE LIB_DIR)
-
-if (LIB_DIR)
-  message(STATUS "Library directory: ${LIB_DIR}")
-else (LIB_DIR)
-  message(FATAL_ERROR "pg_config --libdir failed")
-endif (LIB_DIR)
-
 #
 # Build pgexporter_ext
 #
@@ -162,4 +184,4 @@ set_target_properties(pgexporter_ext PROPERTIES LINKER_LANGUAGE C VERSION ${VERS
                                      SOVERSION ${VERSION_MAJOR} PREFIX "")
 target_link_libraries(pgexporter_ext PUBLIC)
 
-install(TARGETS pgexporter_ext DESTINATION ${LIB_DIR}/)
+install(TARGETS pgexporter_ext DESTINATION ${EXT_LIB_DIR}/)
