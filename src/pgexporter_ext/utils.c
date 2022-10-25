@@ -42,6 +42,7 @@
 #include <sys/types.h>
 
 static char* pgexporter_ext_append(char* orig, char* s);
+static char* pgexporter_ext_append_char(char* orig, char c);
 
 unsigned long
 pgexporter_ext_directory_size(char* directory)
@@ -147,6 +148,50 @@ pgexporter_ext_total_space(char* path)
    return buf.f_frsize * buf.f_blocks;
 }
 
+char*
+pgexporter_ext_trim_whitespace(char* orig)
+{
+   size_t length;
+   size_t offset = 0;
+   char c = 0;
+   char* result = NULL;
+
+   if (orig == NULL || strlen(orig) == 0)
+   {
+      return orig;
+   }
+
+   length = strlen(orig);
+
+   for (int i = 0; i < length; i++)
+   {
+      c = *(orig + i);
+      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+      {
+         offset++;
+      }
+      else
+      {
+         break;
+      }
+   }
+
+   for (int i = offset; i < length; i++)
+   {
+      c = *(orig + i);
+      if (c == '\t' || c == '\r' || c == '\n')
+      {
+         break;
+      }
+      else
+      {
+         result = pgexporter_ext_append_char(result, c);
+      }
+   }
+
+   return result;
+}
+
 static char*
 pgexporter_ext_append(char* orig, char* s)
 {
@@ -177,4 +222,16 @@ pgexporter_ext_append(char* orig, char* s)
    n[orig_length + s_length] = '\0';
 
    return n;
+}
+
+static char*
+pgexporter_ext_append_char(char* orig, char c)
+{
+   char str[2];
+
+   memset(&str[0], 0, sizeof(str));
+   snprintf(&str[0], 2, "%c", c);
+   orig = pgexporter_ext_append(orig, str);
+
+   return orig;
 }

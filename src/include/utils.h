@@ -61,6 +61,14 @@ pgexporter_ext_free_space(char* path);
 unsigned long
 pgexporter_ext_total_space(char* path);
 
+/**
+ * Trim whitespace from a string
+ * @param s The string
+ * @return The result
+ */
+char*
+pgexporter_ext_trim_whitespace(char* s);
+
 #ifdef __cplusplus
 }
 #endif
