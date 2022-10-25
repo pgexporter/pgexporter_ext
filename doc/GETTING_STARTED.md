@@ -31,7 +31,7 @@ psql postgres
 CREATE EXTENSION pgexporter_ext;
 ```
 
-The `pgexporter` user must have the `pg_monitor` rile to access to the functions
+The `pgexporter` user must have the `pg_monitor` role to access to the functions
 in the extension.
 
 [pgexporter](https://github.com/pgexporter/pgexporter) is now able to use the extended functionality
