@@ -61,3 +61,22 @@ LANGUAGE C STRICT;
 
 REVOKE ALL ON FUNCTION pgexporter_load_avg FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_load_avg TO pg_monitor;
+
+CREATE FUNCTION pgexporter_network_info(OUT interface_name text,
+                                        OUT ip_address text,
+                                        OUT tx_bytes int8,
+                                        OUT tx_packets int8,
+                                        OUT tx_errors int8,
+                                        OUT tx_dropped int8,
+                                        OUT rx_bytes int8,
+                                        OUT rx_packets int8,
+                                        OUT rx_errors int8,
+                                        OUT rx_dropped int8,
+                                        OUT link_speed_mbps int
+)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+REVOKE ALL ON FUNCTION pgexporter_network_info FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgexporter_network_info TO pg_monitor;

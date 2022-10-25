@@ -8,6 +8,7 @@
 * OS information
 * CPU information
 * Memory information
+* Network information
 * Load average metrics
 * Disk space metrics
 

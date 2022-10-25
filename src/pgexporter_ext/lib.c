@@ -32,12 +32,14 @@
 
 /* system */
 #include <ctype.h>
+#include <ifaddrs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_LINUX
 #include <sys/sysinfo.h>
 #include <sys/utsname.h>
 #endif
+#include <sys/types.h>
 
 /* PostgreSQL */
 #include "postgres.h"
@@ -77,6 +79,19 @@ PG_MODULE_MAGIC;
 #define MEMORY_INFO_SWAP_FREE    5
 #define MEMORY_INFO_CACHE_TOTAL  6
 
+#define NETWORK_INFO_NUMBER        11
+#define NETWORK_INFO_INTERFACE_NAME 0
+#define NETWORK_INFO_IP_ADDRESS     1
+#define NETWORK_INFO_TX_BYTES       2
+#define NETWORK_INFO_TX_PACKETS     3
+#define NETWORK_INFO_TX_ERRORS      4
+#define NETWORK_INFO_TX_DROPPED     5
+#define NETWORK_INFO_RX_BYTES       6
+#define NETWORK_INFO_RX_PACKETS     7
+#define NETWORK_INFO_RX_ERRORS      8
+#define NETWORK_INFO_RX_DROPPED     9
+#define NETWORK_INFO_LINK_SPEED    10
+
 #define LOAD_AVG_NUMBER       3
 #define LOAD_AVG_ONE_MINUTE   0
 #define LOAD_AVG_FIVE_MINUTES 1
@@ -88,6 +103,8 @@ static void     cpu_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static int      read_cpu_cache_size(const char *file);
 static void     memory_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static uint64_t kb_to_bytes(char* s);
+static void     network_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
+static void     get_file_value(char* filename, char* interface, uint64_t* value);
 static void     load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc);
 
 void _PG_init(void)
@@ -107,6 +124,7 @@ PG_FUNCTION_INFO_V1(pgexporter_total_space);
 PG_FUNCTION_INFO_V1(pgexporter_os_info);
 PG_FUNCTION_INFO_V1(pgexporter_cpu_info);
 PG_FUNCTION_INFO_V1(pgexporter_memory_info);
+PG_FUNCTION_INFO_V1(pgexporter_network_info);
 
 PG_FUNCTION_INFO_V1(pgexporter_load_avg);
 
@@ -255,6 +273,37 @@ pgexporter_memory_info(PG_FUNCTION_ARGS)
 }
 
 Datum
+pgexporter_network_info(PG_FUNCTION_ARGS)
+{
+   ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
+   TupleDesc tupdesc;
+   Tuplestorestate* tupstore;
+   MemoryContext per_query_ctx;
+   MemoryContext oldcontext;
+
+   per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+   oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+   if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+   {
+      elog(ERROR, "Must be a return row type");
+   }
+
+   tupstore = tuplestore_begin_heap(true, false, work_mem);
+   rsinfo->returnMode = SFRM_Materialize;
+   rsinfo->setResult = tupstore;
+   rsinfo->setDesc = tupdesc;
+
+   MemoryContextSwitchTo(oldcontext);
+
+   network_info(tupstore, tupdesc);
+
+   tuplestore_donestoring(tupstore);
+
+   return (Datum)0;
+}
+
+Datum
 pgexporter_load_avg(PG_FUNCTION_ARGS)
 {
    ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
@@ -289,6 +338,8 @@ static void
 os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
 {
 #ifdef HAVE_LINUX
+   const int max_length = 1024;
+   char buffer[max_length];
    struct utsname uts;
    struct sysinfo s_info;
    Datum values[OS_INFO_NUMBER];
@@ -299,9 +350,6 @@ os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    char architecture[MAXPGPATH];
    char os_name[MAXPGPATH];
    FILE* os_info_file;
-   char* line_buf = NULL;
-   size_t line_buf_size = 0;
-   ssize_t line_size;
    int process_count = 0;
 
    memset(nulls, 0, sizeof(nulls));
@@ -340,27 +388,14 @@ os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    }
    else
    {
-      line_size = getline(&line_buf, &line_buf_size, os_info_file);
-
-      while (line_size >= 0)
+      while (fgets(&buffer[0], max_length, os_info_file) != NULL)
       {
-         int len = strlen(line_buf);
-         if (strstr(line_buf, "PRETTY_NAME=") != NULL)
-            memcpy(os_name, (line_buf + strlen("PRETTY_NAME=")), (len - strlen("PRETTY_NAME=")));
-
-         if (line_buf != NULL)
+         int length = strlen(buffer);
+         if (length > 0)
          {
-            free(line_buf);
-            line_buf = NULL;
+            if (strstr(buffer, "PRETTY_NAME=") != NULL)
+               memcpy(os_name, (buffer + strlen("PRETTY_NAME=")), (length - strlen("PRETTY_NAME=")));
          }
-
-         line_size = getline(&line_buf, &line_buf_size, os_info_file);
-      }
-
-      if (line_buf != NULL)
-      {
-         free(line_buf);
-         line_buf = NULL;
       }
 
       fclose(os_info_file);
@@ -757,6 +792,155 @@ kb_to_bytes(char* s)
 
    return value;
 }
+
+static void
+network_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
+{
+#ifdef HAVE_LINUX
+   Datum values[NETWORK_INFO_NUMBER];
+   bool nulls[NETWORK_INFO_NUMBER];
+   struct ifaddrs *ifaddr;
+   struct ifaddrs *ifa;
+   char interface_name[MAXPGPATH];
+   char ipv4_address[MAXPGPATH];
+   char host[MAXPGPATH];
+   uint64 speed_mbps = 0;
+   uint64 tx_bytes = 0;
+   uint64 tx_packets = 0;
+   uint64 tx_errors = 0;
+   uint64 tx_dropped = 0;
+   uint64 rx_bytes = 0;
+   uint64 rx_packets = 0;
+   uint64 rx_errors = 0;
+   uint64 rx_dropped = 0;
+
+   memset(nulls, 0, sizeof(nulls));
+   memset(interface_name, 0, MAXPGPATH);
+   memset(ipv4_address, 0, MAXPGPATH);
+   memset(host, 0, MAXPGPATH);
+
+   if (getifaddrs(&ifaddr) == -1)
+   {
+      goto error;
+   }
+
+   for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+   {
+      if (ifa->ifa_addr == NULL)
+         continue;
+
+      if (ifa->ifa_addr->sa_family == AF_INET)
+      {
+         if (getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, MAXPGPATH, NULL, 0, NI_NUMERICHOST) != 0)
+         {
+            goto error;
+         }
+
+         memset(interface_name, 0, sizeof(interface_name));
+         memset(ipv4_address, 0, sizeof(ipv4_address));
+         memcpy(interface_name, ifa->ifa_name, strlen(ifa->ifa_name));
+         memcpy(ipv4_address, host, MAXPGPATH);
+
+         get_file_value("/sys/class/net/%s/statistics/tx_bytes", interface_name, &tx_bytes);
+         get_file_value("/sys/class/net/%s/statistics/tx_packets", interface_name, &tx_packets);
+         get_file_value("/sys/class/net/%s/statistics/tx_errors", interface_name, &tx_errors);
+         get_file_value("/sys/class/net/%s/statistics/tx_dropped", interface_name, &tx_dropped);
+
+         get_file_value("/sys/class/net/%s/statistics/rx_bytes", interface_name, &rx_bytes);
+         get_file_value("/sys/class/net/%s/statistics/rx_packets", interface_name, &rx_packets);
+         get_file_value("/sys/class/net/%s/statistics/rx_errors", interface_name, &rx_errors);
+         get_file_value("/sys/class/net/%s/statistics/rx_dropped", interface_name, &rx_dropped);
+
+         get_file_value("/sys/class/net/%s/speed", interface_name, &speed_mbps);
+
+         values[NETWORK_INFO_INTERFACE_NAME] = CStringGetTextDatum(interface_name);
+         values[NETWORK_INFO_IP_ADDRESS] = CStringGetTextDatum(ipv4_address);
+         values[NETWORK_INFO_TX_BYTES] = Int64GetDatumFast(tx_bytes);
+         values[NETWORK_INFO_TX_PACKETS] = Int64GetDatumFast(tx_packets);
+         values[NETWORK_INFO_TX_ERRORS] = Int64GetDatumFast(tx_errors);
+         values[NETWORK_INFO_TX_DROPPED] = Int64GetDatumFast(tx_dropped);
+         values[NETWORK_INFO_RX_BYTES] = Int64GetDatumFast(rx_bytes);
+         values[NETWORK_INFO_RX_PACKETS] = Int64GetDatumFast(rx_packets);
+         values[NETWORK_INFO_RX_ERRORS] = Int64GetDatumFast(rx_errors);
+         values[NETWORK_INFO_RX_DROPPED] = Int64GetDatumFast(rx_dropped);
+         values[NETWORK_INFO_LINK_SPEED] = Int64GetDatumFast(speed_mbps);
+
+         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+      }
+   }
+
+   freeifaddrs(ifaddr);
+
+   return;
+
+error:
+
+   nulls[NETWORK_INFO_INTERFACE_NAME] = true;
+   nulls[NETWORK_INFO_IP_ADDRESS] = true;
+   nulls[NETWORK_INFO_TX_BYTES] = true;
+   nulls[NETWORK_INFO_TX_PACKETS] = true;
+   nulls[NETWORK_INFO_TX_ERRORS] = true;
+   nulls[NETWORK_INFO_TX_DROPPED] = true;
+   nulls[NETWORK_INFO_RX_BYTES] = true;
+   nulls[NETWORK_INFO_RX_PACKETS] = true;
+   nulls[NETWORK_INFO_RX_ERRORS] = true;
+   nulls[NETWORK_INFO_RX_DROPPED] = true;
+   nulls[NETWORK_INFO_LINK_SPEED] = true;
+
+   tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+#else
+
+   Datum values[NETWORK_INFO_NUMBER];
+   bool nulls[NETWORK_INFO_NUMBER];
+
+   memset(nulls, 0, sizeof(nulls));
+
+   nulls[NETWORK_INFO_INTERFACE_NAME] = true;
+   nulls[NETWORK_INFO_IP_ADDRESS] = true;
+   nulls[NETWORK_INFO_TX_BYTES] = true;
+   nulls[NETWORK_INFO_TX_PACKETS] = true;
+   nulls[NETWORK_INFO_TX_ERRORS] = true;
+   nulls[NETWORK_INFO_TX_DROPPED] = true;
+   nulls[NETWORK_INFO_RX_BYTES] = true;
+   nulls[NETWORK_INFO_RX_PACKETS] = true;
+   nulls[NETWORK_INFO_RX_ERRORS] = true;
+   nulls[NETWORK_INFO_RX_DROPPED] = true;
+   nulls[NETWORK_INFO_LINK_SPEED] = true;
+
+   tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+#endif
+}
+
+static void
+get_file_value(char* filename, char* interface, uint64_t* value)
+{
+   const int max_length = 1024;
+   char buffer[max_length];
+   char f[MAXPGPATH];
+   FILE* fp = NULL;
+
+   memset(f, 0, MAXPGPATH);
+   sprintf(f, filename, interface);
+
+   *value = 0;
+
+   fp = fopen(f, "r");
+
+   if (!fp)
+   {
+      return;
+   }
+
+   if (fgets(&buffer[0], max_length, fp) != NULL)
+   {
+      *value = atoll(buffer);
+   }
+
+   fclose(fp);
+}
+
 
 static void
 load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc)
