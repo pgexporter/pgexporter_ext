@@ -31,13 +31,8 @@ psql postgres
 CREATE EXTENSION pgexporter_ext;
 ```
 
-The `pgexporter` user must have access to the following functions,
-
-```
-GRANT EXECUTE ON FUNCTION pgexporter_used_space TO pgexporter;
-GRANT EXECUTE ON FUNCTION pgexporter_free_space TO pgexporter;
-GRANT EXECUTE ON FUNCTION pgexporter_total_space TO pgexporter;
-```
+The `pgexporter` user must have the `pg_monitor` rile to access to the functions
+in the extension.
 
 [pgexporter](https://github.com/pgexporter/pgexporter) is now able to use the extended functionality
 of [pgexporter_ext](https://github.com/pgexporter/pgexporter_ext).

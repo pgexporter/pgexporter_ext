@@ -5,6 +5,10 @@
 
 ## Features
 
+* OS information
+* CPU information
+* Memory information
+* Load average metrics
 * Disk space metrics
 
 See [Getting Started](./doc/GETTING_STARTED.md) on how to get started with `pgexporter_ext`.
