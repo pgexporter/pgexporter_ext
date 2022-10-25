@@ -50,3 +50,14 @@ LANGUAGE C STRICT;
 
 REVOKE ALL ON FUNCTION pgexporter_memory_info FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_memory_info TO pg_monitor;
+
+CREATE FUNCTION pgexporter_load_avg(OUT load_avg_one_minute float4,
+                                    OUT load_avg_five_minutes float4,
+                                    OUT load_avg_ten_minutes float4
+)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+REVOKE ALL ON FUNCTION pgexporter_load_avg FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgexporter_load_avg TO pg_monitor;

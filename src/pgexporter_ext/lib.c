@@ -77,12 +77,18 @@ PG_MODULE_MAGIC;
 #define MEMORY_INFO_SWAP_FREE    5
 #define MEMORY_INFO_CACHE_TOTAL  6
 
+#define LOAD_AVG_NUMBER       3
+#define LOAD_AVG_ONE_MINUTE   0
+#define LOAD_AVG_FIVE_MINUTES 1
+#define LOAD_AVG_TEN_MINUTES  2
+
 static void     os_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static bool     read_processes(int* process_count);
 static void     cpu_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static int      read_cpu_cache_size(const char *file);
 static void     memory_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static uint64_t kb_to_bytes(char* s);
+static void     load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc);
 
 void _PG_init(void)
 {
@@ -101,6 +107,8 @@ PG_FUNCTION_INFO_V1(pgexporter_total_space);
 PG_FUNCTION_INFO_V1(pgexporter_os_info);
 PG_FUNCTION_INFO_V1(pgexporter_cpu_info);
 PG_FUNCTION_INFO_V1(pgexporter_memory_info);
+
+PG_FUNCTION_INFO_V1(pgexporter_load_avg);
 
 Datum
 pgexporter_version(PG_FUNCTION_ARGS)
@@ -240,6 +248,37 @@ pgexporter_memory_info(PG_FUNCTION_ARGS)
    MemoryContextSwitchTo(oldcontext);
 
    memory_info(tupstore, tupdesc);
+
+   tuplestore_donestoring(tupstore);
+
+   return (Datum)0;
+}
+
+Datum
+pgexporter_load_avg(PG_FUNCTION_ARGS)
+{
+   ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
+   TupleDesc tupdesc;
+   Tuplestorestate* tupstore;
+   MemoryContext per_query_ctx;
+   MemoryContext oldcontext;
+
+   per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+   oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+   if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+   {
+      elog(ERROR, "Must be a return row type");
+   }
+
+   tupstore = tuplestore_begin_heap(true, false, work_mem);
+   rsinfo->returnMode = SFRM_Materialize;
+   rsinfo->setResult = tupstore;
+   rsinfo->setDesc = tupdesc;
+
+   MemoryContextSwitchTo(oldcontext);
+
+   load_avg(tupstore, tupdesc);
 
    tuplestore_donestoring(tupstore);
 
@@ -717,4 +756,77 @@ kb_to_bytes(char* s)
    free(trimmed);
 
    return value;
+}
+
+static void
+load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc)
+{
+#ifdef HAVE_LINUX
+   const int max_length = 1024;
+   char buffer[max_length];
+   FILE* loadavg_file = NULL;
+   Datum values[LOAD_AVG_NUMBER];
+   bool nulls[LOAD_AVG_NUMBER];
+   float4 load_avg_one_minute = 0;
+   float4 load_avg_five_minutes = 0;
+   float4 load_avg_ten_minutes = 0;
+   const char *scan_fmt = "%f %f %f";
+
+   memset(nulls, 0, sizeof(nulls));
+
+   loadavg_file = fopen("/proc/loadavg", "r");
+
+   if (!loadavg_file)
+   {
+      goto error;
+   }
+   else
+   {
+      if (fgets(&buffer[0], max_length, loadavg_file) != NULL)
+      {
+         sscanf(buffer, scan_fmt, &load_avg_one_minute, &load_avg_five_minutes, &load_avg_ten_minutes);
+
+         values[LOAD_AVG_ONE_MINUTE]   = Float4GetDatum(load_avg_one_minute);
+         values[LOAD_AVG_FIVE_MINUTES] = Float4GetDatum(load_avg_five_minutes);
+         values[LOAD_AVG_TEN_MINUTES]  = Float4GetDatum(load_avg_ten_minutes);
+
+         tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+      }
+      else
+      {
+         goto error;
+      }
+
+      fclose(loadavg_file);
+   }
+
+   return;
+
+error:
+
+   if (loadavg_file != NULL)
+   {
+      fclose(loadavg_file);
+   }
+
+   nulls[LOAD_AVG_ONE_MINUTE] = true;
+   nulls[LOAD_AVG_FIVE_MINUTES] = true;
+   nulls[LOAD_AVG_TEN_MINUTES] = true;
+
+   tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+#else
+
+   Datum values[LOAD_AVG_NUMBER];
+   bool nulls[LOAD_AVG_NUMBER];
+
+   memset(nulls, 0, sizeof(nulls));
+
+   nulls[LOAD_AVG_ONE_MINUTE] = true;
+   nulls[LOAD_AVG_FIVE_MINUTES] = true;
+   nulls[LOAD_AVG_TEN_MINUTES] = true;
+
+   tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+#endif
 }
