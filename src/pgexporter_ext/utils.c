@@ -42,7 +42,6 @@
 #include <sys/types.h>
 
 static char* pgexporter_ext_append(char* orig, char* s);
-static char* pgexporter_ext_append_char(char* orig, char c);
 
 unsigned long
 pgexporter_ext_directory_size(char* directory)
@@ -149,10 +148,11 @@ pgexporter_ext_total_space(char* path)
 }
 
 char*
-pgexporter_ext_trim_whitespace(char* orig)
+pgexporter_ext_clean_string(char* orig)
 {
    size_t length;
-   size_t offset = 0;
+   size_t from = 0;
+   size_t to = 0;
    char c = 0;
    char* result = NULL;
 
@@ -166,9 +166,9 @@ pgexporter_ext_trim_whitespace(char* orig)
    for (int i = 0; i < length; i++)
    {
       c = *(orig + i);
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+      if (c == ' ' || c == '\'' || c == '\"' || c == '\t' || c == '\r' || c == '\n')
       {
-         offset++;
+         from++;
       }
       else
       {
@@ -176,18 +176,24 @@ pgexporter_ext_trim_whitespace(char* orig)
       }
    }
 
-   for (int i = offset; i < length; i++)
+   to = length;
+   for (int i = length; i > 0; i--)
    {
       c = *(orig + i);
-      if (c == '\t' || c == '\r' || c == '\n')
+      if (c == ' ' || c == '\'' || c == '\"' || c == '\t' || c == '\r' || c == '\n')
       {
-         break;
+         /* Skip */
       }
       else
       {
-         result = pgexporter_ext_append_char(result, c);
+         to = i;
+         break;
       }
    }
+
+   result = (char*)malloc(to - from + 1);
+   memset(result, 0, to - from + 1);
+   memcpy(result, orig + from, to - from);
 
    return result;
 }
@@ -222,16 +228,4 @@ pgexporter_ext_append(char* orig, char* s)
    n[orig_length + s_length] = '\0';
 
    return n;
-}
-
-static char*
-pgexporter_ext_append_char(char* orig, char c)
-{
-   char str[2];
-
-   memset(&str[0], 0, sizeof(str));
-   snprintf(&str[0], 2, "%c", c);
-   orig = pgexporter_ext_append(orig, str);
-
-   return orig;
 }

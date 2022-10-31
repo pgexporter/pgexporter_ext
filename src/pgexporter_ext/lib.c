@@ -380,7 +380,7 @@ os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
       nulls[OS_INFO_DOMAIN_NAME] = true;
    }
 
-   os_info_file = fopen("/etc/os-release", "r");
+   os_info_file = fopen("/etc/system-release", "r");
 
    if (!os_info_file)
    {
@@ -388,14 +388,9 @@ os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    }
    else
    {
-      while (fgets(&buffer[0], max_length, os_info_file) != NULL)
+      if (fgets(&buffer[0], max_length, os_info_file) != NULL)
       {
-         int length = strlen(buffer);
-         if (length > 0)
-         {
-            if (strstr(buffer, "PRETTY_NAME=") != NULL)
-               memcpy(os_name, (buffer + strlen("PRETTY_NAME=")), (length - strlen("PRETTY_NAME=")));
-         }
+         memcpy(os_name, buffer, strlen(buffer) - 1);
       }
 
       fclose(os_info_file);
@@ -426,6 +421,8 @@ os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    values[OS_INFO_DOMAIN_NAME] = CStringGetTextDatum(domain_name);
 
    tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+   return;
 
 #else
 
@@ -542,11 +539,11 @@ cpu_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
             {
                if (strstr(&buffer[0], "vendor_id") != NULL)
                {
-                  memcpy(vendor_id, col + 1, strlen(col + 1));
+                  memcpy(vendor_id, col + 2, strlen(col + 2) - 1);
                }
                else if (strstr(&buffer[0], "model name") != NULL)
                {
-                  memcpy(model_name, col + 1, strlen(col + 1));
+                  memcpy(model_name, col + 2, strlen(col + 2) - 1);
                }
                else if (strstr(&buffer[0], "cpu cores") != NULL)
                {
@@ -769,7 +766,7 @@ kb_to_bytes(char* s)
    char* token;
 
    col = strstr(s, ":");
-   trimmed = pgexporter_ext_trim_whitespace(col + 1);
+   trimmed = pgexporter_ext_clean_string(col + 1);
 
    token = strtok(trimmed, " ");
    value = atoll(token);
