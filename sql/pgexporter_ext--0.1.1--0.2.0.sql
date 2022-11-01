@@ -12,7 +12,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_is_supported FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_is_supported TO pg_monitor;
 
-CREATE FUNCTION pgexporter_get_functions(OUT fname text, OUT has_input bool)
+CREATE FUNCTION pgexporter_get_functions(OUT fname text, OUT has_input bool, OUT description text, OUT ftype text)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;

@@ -113,20 +113,22 @@ static struct function
 {
    char name[128];
    bool has_input;
+   char description[128];
+   char type[16];
 } f;
 
 static struct function functions[] = {
-   {"pgexporter_version", false},
-   {"pgexporter_is_supported", true},
-   {"pgexporter_get_functions", false},
-   {"pgexporter_used_space", true},
-   {"pgexporter_free_space", true},
-   {"pgexporter_total_space", true},
-   {"pgexporter_os_info", false},
-   {"pgexporter_cpu_info", false},
-   {"pgexporter_memory_info", false},
-   {"pgexporter_network_info", false},
-   {"pgexporter_load_avg", false}
+   {"pgexporter_version", false, "pgexporter version", "gauge"},
+   {"pgexporter_is_supported", true, "Is the pgexporter function supported", ""},
+   {"pgexporter_get_functions", false, "Get the pgexporter functions", ""},
+   {"pgexporter_used_space", true, "Get the used disk space", "gauge"},
+   {"pgexporter_free_space", true, "Get the free disk space", "gauge"},
+   {"pgexporter_total_space", true, "Get the total disk space", "gauge"},
+   {"pgexporter_os_info", false, "The OS information", "gauge"},
+   {"pgexporter_cpu_info", false, "The CPU information", "gauge"},
+   {"pgexporter_memory_info", false, "The memory information", "gauge"},
+   {"pgexporter_network_info", false, "The network information", "gauge"},
+   {"pgexporter_load_avg", false, "The load averages", "gauge"}
 };
 
 void _PG_init(void)
@@ -198,8 +200,8 @@ pgexporter_get_functions(PG_FUNCTION_ARGS)
    Tuplestorestate* tupstore;
    MemoryContext per_query_ctx;
    MemoryContext oldcontext;
-   Datum values[2];
-   bool nulls[2];
+   Datum values[4];
+   bool nulls[4];
 
    memset(&nulls[0], 0, sizeof(nulls));
 
@@ -222,6 +224,8 @@ pgexporter_get_functions(PG_FUNCTION_ARGS)
    {
       values[0] = CStringGetTextDatum(functions[i].name);
       values[1] = DatumGetBool(functions[i].has_input);
+      values[2] = CStringGetTextDatum(functions[i].description);
+      values[3] = CStringGetTextDatum(functions[i].type);
       tuplestore_putvalues(tupstore, tupdesc, values, nulls);
    }
 
