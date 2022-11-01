@@ -5,6 +5,21 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_version FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_version TO pg_monitor;
 
+CREATE FUNCTION pgexporter_is_supported(IN fname text) RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+REVOKE ALL ON FUNCTION pgexporter_is_supported FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgexporter_is_supported TO pg_monitor;
+
+CREATE FUNCTION pgexporter_get_functions(OUT fname text, OUT has_input bool)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+REVOKE ALL ON FUNCTION pgexporter_get_functions FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgexporter_get_functions TO pg_monitor;
+
 CREATE FUNCTION pgexporter_os_info(OUT name text,
                                    OUT version text,
                                    OUT architecture text,

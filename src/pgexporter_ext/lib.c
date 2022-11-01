@@ -107,6 +107,28 @@ static void     network_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static void     get_file_value(char* filename, char* interface, uint64_t* value);
 static void     load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc);
 
+#define NUMBER_OF_FUNCTIONS 11
+__attribute__((used))
+static struct function
+{
+   char name[128];
+   bool has_input;
+} f;
+
+static struct function functions[] = {
+   {"pgexporter_version", false},
+   {"pgexporter_is_supported", true},
+   {"pgexporter_get_functions", false},
+   {"pgexporter_used_space", true},
+   {"pgexporter_free_space", true},
+   {"pgexporter_total_space", true},
+   {"pgexporter_os_info", false},
+   {"pgexporter_cpu_info", false},
+   {"pgexporter_memory_info", false},
+   {"pgexporter_network_info", false},
+   {"pgexporter_load_avg", false}
+};
+
 void _PG_init(void)
 {
 }
@@ -116,6 +138,8 @@ void _PG_fini(void)
 }
 
 PG_FUNCTION_INFO_V1(pgexporter_version);
+PG_FUNCTION_INFO_V1(pgexporter_is_supported);
+PG_FUNCTION_INFO_V1(pgexporter_get_functions);
 
 PG_FUNCTION_INFO_V1(pgexporter_used_space);
 PG_FUNCTION_INFO_V1(pgexporter_free_space);
@@ -144,6 +168,66 @@ pgexporter_version(PG_FUNCTION_ARGS)
    version = CStringGetTextDatum(v);
 
    PG_RETURN_CSTRING(version);
+}
+
+Datum
+pgexporter_is_supported(PG_FUNCTION_ARGS)
+{
+   Datum result;
+   bool found = false;
+   char* fname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+   for (int i = 0; !found && i < NUMBER_OF_FUNCTIONS; i++)
+   {
+      if (!strcmp(functions[i].name, fname))
+      {
+         found = true;
+      }
+   }
+
+   result = DatumGetBool(found);
+
+   PG_RETURN_BOOL(result);
+}
+
+Datum
+pgexporter_get_functions(PG_FUNCTION_ARGS)
+{
+   ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
+   TupleDesc tupdesc;
+   Tuplestorestate* tupstore;
+   MemoryContext per_query_ctx;
+   MemoryContext oldcontext;
+   Datum values[2];
+   bool nulls[2];
+
+   memset(&nulls[0], 0, sizeof(nulls));
+
+   per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+   oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+   if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+   {
+      elog(ERROR, "Must be a return row type");
+   }
+
+   tupstore = tuplestore_begin_heap(true, false, work_mem);
+   rsinfo->returnMode = SFRM_Materialize;
+   rsinfo->setResult = tupstore;
+   rsinfo->setDesc = tupdesc;
+
+   MemoryContextSwitchTo(oldcontext);
+
+   for (int i = 0; i < NUMBER_OF_FUNCTIONS; i++)
+   {
+      values[0] = CStringGetTextDatum(functions[i].name);
+      values[1] = DatumGetBool(functions[i].has_input);
+      tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+   }
+
+   tuplestore_donestoring(tupstore);
+
+   return (Datum)0;
 }
 
 Datum
