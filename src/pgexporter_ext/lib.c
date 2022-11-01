@@ -118,7 +118,8 @@ static struct function
 } f;
 
 static struct function functions[] = {
-   {"pgexporter_version", false, "pgexporter version", "gauge"},
+   /* {"pgexporter_information_ext", false, "pgexporter extension information", ""}, */
+   {"pgexporter_version_ext", false, "pgexporter extension version", "gauge"},
    {"pgexporter_is_supported", true, "Is the pgexporter function supported", ""},
    {"pgexporter_get_functions", false, "Get the pgexporter functions", ""},
    {"pgexporter_used_space", true, "Get the used disk space", "gauge"},
@@ -139,7 +140,8 @@ void _PG_fini(void)
 {
 }
 
-PG_FUNCTION_INFO_V1(pgexporter_version);
+PG_FUNCTION_INFO_V1(pgexporter_information_ext);
+PG_FUNCTION_INFO_V1(pgexporter_version_ext);
 PG_FUNCTION_INFO_V1(pgexporter_is_supported);
 PG_FUNCTION_INFO_V1(pgexporter_get_functions);
 
@@ -155,17 +157,31 @@ PG_FUNCTION_INFO_V1(pgexporter_network_info);
 PG_FUNCTION_INFO_V1(pgexporter_load_avg);
 
 Datum
-pgexporter_version(PG_FUNCTION_ARGS)
+pgexporter_information_ext(PG_FUNCTION_ARGS)
+{
+   Datum version;
+   char i[1024];
+
+   memset(&i, 0, sizeof(i));
+   snprintf(&i[0], sizeof(i), "pgexporter_ext %s", VERSION);
+
+   ereport(INFO, (errmsg("pgexporter_ext %s", VERSION)));
+   ereport(INFO, (errmsg("  Homepage: %s", PGEXPORTER_EXT_HOMEPAGE)));
+   ereport(INFO, (errmsg("  Issues: %s", PGEXPORTER_EXT_ISSUES)));
+
+   version = CStringGetTextDatum(i);
+
+   PG_RETURN_CSTRING(version);
+}
+
+Datum
+pgexporter_version_ext(PG_FUNCTION_ARGS)
 {
    Datum version;
    char v[1024];
 
    memset(&v, 0, sizeof(v));
-   snprintf(&v[0], sizeof(v), "pgexporter_ext %s", VERSION);
-
-   ereport(INFO, (errmsg("pgexporter_ext %s", VERSION)));
-   ereport(INFO, (errmsg("  Homepage: %s", PGEXPORTER_EXT_HOMEPAGE)));
-   ereport(INFO, (errmsg("  Issues: %s", PGEXPORTER_EXT_ISSUES)));
+   snprintf(&v[0], sizeof(v), "%s", VERSION);
 
    version = CStringGetTextDatum(v);
 

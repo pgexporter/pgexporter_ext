@@ -1,9 +1,16 @@
-CREATE FUNCTION pgexporter_version() RETURNS text
+CREATE FUNCTION pgexporter_information_ext() RETURNS text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 
-REVOKE ALL ON FUNCTION pgexporter_version FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION pgexporter_version TO pg_monitor;
+REVOKE ALL ON FUNCTION pgexporter_information_ext FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgexporter_information_ext TO pg_monitor;
+
+CREATE FUNCTION pgexporter_version_ext() RETURNS text
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+
+REVOKE ALL ON FUNCTION pgexporter_version_ext FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pgexporter_version_ext TO pg_monitor;
 
 CREATE FUNCTION pgexporter_is_supported(IN fname text) RETURNS bool
 AS 'MODULE_PATHNAME'
