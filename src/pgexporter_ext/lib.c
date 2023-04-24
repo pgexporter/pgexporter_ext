@@ -616,7 +616,7 @@ cpu_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    int l3cache_size_kb = 0;
    int cpu_cores = 0;
    float cpu_hz;
-   uint64_t cpu_freq;
+   uint64_t cpu_freq = 0;
 
    memset(nulls, 0, sizeof(nulls));
    memset(vendor_id, 0, MAXPGPATH);
