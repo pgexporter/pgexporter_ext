@@ -34,6 +34,13 @@ See [Getting Started](./doc/GETTING_STARTED.md) on how to get started with `pgex
 dnf install git gcc cmake make postgresql-devel
 ```
 
+**NOTE**: It may happen that build fails due to `"postgres.h"` not being found. In that case, uninstall the package `postgresql-devel` and instead install `postgresql-server-devel`:
+
+```sh
+dnf remove postgresql-devel
+dnf install postgresql-server-devel
+```
+
 Alternative [clang 8+](https://clang.llvm.org/) can be used.
 
 ### Release build
