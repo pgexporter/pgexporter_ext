@@ -105,7 +105,7 @@ static int      read_cpu_cache_size(const char *file);
 static void     memory_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static uint64_t kb_to_bytes(char* s);
 static void     network_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
-static void     get_file_value(char* filename, char* interface, uint64_t* value);
+static void     get_file_value(char* filename, char* interface, int64_t* value);
 static void     load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc);
 
 #define NUMBER_OF_FUNCTIONS 11
@@ -172,7 +172,7 @@ pgexporter_information_ext(PG_FUNCTION_ARGS)
 
    version = CStringGetTextDatum(i);
 
-   PG_RETURN_CSTRING(version);
+   PG_RETURN_DATUM(version);
 }
 
 Datum
@@ -186,7 +186,7 @@ pgexporter_version_ext(PG_FUNCTION_ARGS)
 
    version = CStringGetTextDatum(v);
 
-   PG_RETURN_CSTRING(version);
+   PG_RETURN_DATUM(version);
 }
 
 Datum
@@ -616,7 +616,7 @@ cpu_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    int l3cache_size_kb = 0;
    int cpu_cores = 0;
    float cpu_hz;
-   uint64_t cpu_freq = 0;
+   int64_t cpu_freq = 0;
 
    memset(nulls, 0, sizeof(nulls));
    memset(vendor_id, 0, MAXPGPATH);
@@ -759,14 +759,14 @@ memory_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    FILE* memory_file;
    Datum values[MEMORY_INFO_NUMBER];
    bool nulls[MEMORY_INFO_NUMBER];
-   uint64 total_memory_bytes = 0;
-   uint64 available_memory_bytes = 0;
-   uint64 used_memory_bytes = 0;
-   uint64 free_memory_bytes = 0;
-   uint64 swap_total_bytes = 0;
-   uint64 swap_used_bytes = 0;
-   uint64 swap_free_bytes = 0;
-   uint64 cached_bytes = 0;
+   int64 total_memory_bytes = 0;
+   int64 available_memory_bytes = 0;
+   int64 used_memory_bytes = 0;
+   int64 free_memory_bytes = 0;
+   int64 swap_total_bytes = 0;
+   int64 swap_used_bytes = 0;
+   int64 swap_free_bytes = 0;
+   int64 cached_bytes = 0;
 
    memset(nulls, 0, sizeof(nulls));
 
@@ -906,15 +906,15 @@ network_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    char interface_name[MAXPGPATH];
    char ipv4_address[MAXPGPATH];
    char host[MAXPGPATH];
-   uint64 speed_mbps = 0;
-   uint64 tx_bytes = 0;
-   uint64 tx_packets = 0;
-   uint64 tx_errors = 0;
-   uint64 tx_dropped = 0;
-   uint64 rx_bytes = 0;
-   uint64 rx_packets = 0;
-   uint64 rx_errors = 0;
-   uint64 rx_dropped = 0;
+   int64 speed_mbps = 0;
+   int64 tx_bytes = 0;
+   int64 tx_packets = 0;
+   int64 tx_errors = 0;
+   int64 tx_dropped = 0;
+   int64 rx_bytes = 0;
+   int64 rx_packets = 0;
+   int64 rx_errors = 0;
+   int64 rx_dropped = 0;
 
    memset(nulls, 0, sizeof(nulls));
    memset(interface_name, 0, MAXPGPATH);
@@ -1016,7 +1016,7 @@ error:
 }
 
 static void
-get_file_value(char* filename, char* interface, uint64_t* value)
+get_file_value(char* filename, char* interface, int64_t* value)
 {
    const int max_length = 1024;
    char buffer[max_length];
