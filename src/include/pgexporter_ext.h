@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#define VERSION "0.2.3"
+#define VERSION "0.2.4"
 
 #define PGEXPORTER_EXT_HOMEPAGE "https://pgexporter.github.io/"
 #define PGEXPORTER_EXT_ISSUES "https://github.com/pgexporter/pgexporter_ext/issues"
