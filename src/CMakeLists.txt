@@ -26,6 +26,16 @@ else (EXT_INCLUDE_SERVER_DIR)
   message(FATAL_ERROR "pg_config --includedir-server failed")
 endif (EXT_INCLUDE_SERVER_DIR)
 
+execute_process(COMMAND pg_config --pkglibdir
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                OUTPUT_VARIABLE EXT_INSTALL_DIR)
+
+if (EXT_INSTALL_DIR)
+  message(STATUS "Library directory: ${EXT_INSTALL_DIR}")
+else (EXT_INSTALL_DIR)
+  message(FATAL_ERROR "pg_config --pkglibdir failed")
+endif (EXT_INSTALL_DIR)
+
 execute_process(COMMAND pg_config --libdir
                 OUTPUT_STRIP_TRAILING_WHITESPACE
                 OUTPUT_VARIABLE EXT_LIB_DIR)
@@ -163,4 +173,4 @@ set_target_properties(pgexporter_ext PROPERTIES LINKER_LANGUAGE C VERSION ${VERS
                                      SOVERSION ${VERSION_MAJOR} PREFIX "")
 target_link_libraries(pgexporter_ext PUBLIC)
 
-install(TARGETS pgexporter_ext DESTINATION ${EXT_LIB_DIR}/)
+install(TARGETS pgexporter_ext DESTINATION ${EXT_INSTALL_DIR}/)
