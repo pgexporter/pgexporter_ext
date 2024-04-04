@@ -101,7 +101,7 @@ PG_MODULE_MAGIC;
 static void     os_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static bool     read_processes(int* process_count);
 static void     cpu_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
-static int      read_cpu_cache_size(const char *file);
+static int      read_cpu_cache_size(const char* file);
 static void     memory_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static uint64_t kb_to_bytes(char* s);
 static void     network_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
@@ -133,11 +133,13 @@ static struct function functions[] = {
    {"pgexporter_load_avg", false, "The load averages", "gauge"}
 };
 
-void _PG_init(void)
+void
+_PG_init(void)
 {
 }
 
-void _PG_fini(void)
+void
+_PG_fini(void)
 {
 }
 
@@ -471,7 +473,7 @@ os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    }
    else
    {
-      nulls[OS_INFO_VERSION]  = true;
+      nulls[OS_INFO_VERSION] = true;
       nulls[OS_INFO_ARCHITECTURE] = true;
    }
 
@@ -901,8 +903,8 @@ network_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
 #ifdef HAVE_LINUX
    Datum values[NETWORK_INFO_NUMBER];
    bool nulls[NETWORK_INFO_NUMBER];
-   struct ifaddrs *ifaddr;
-   struct ifaddrs *ifa;
+   struct ifaddrs* ifaddr;
+   struct ifaddrs* ifa;
    char interface_name[MAXPGPATH];
    char ipv4_address[MAXPGPATH];
    char host[MAXPGPATH];
@@ -929,7 +931,9 @@ network_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
    {
       if (ifa->ifa_addr == NULL)
+      {
          continue;
+      }
 
       if (ifa->ifa_addr->sa_family == AF_INET)
       {
@@ -1043,7 +1047,6 @@ get_file_value(char* filename, char* interface, int64_t* value)
    fclose(fp);
 }
 
-
 static void
 load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc)
 {
@@ -1056,7 +1059,7 @@ load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc)
    float4 load_avg_one_minute = 0;
    float4 load_avg_five_minutes = 0;
    float4 load_avg_ten_minutes = 0;
-   const char *scan_fmt = "%f %f %f";
+   const char* scan_fmt = "%f %f %f";
 
    memset(nulls, 0, sizeof(nulls));
 
@@ -1072,9 +1075,9 @@ load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc)
       {
          sscanf(buffer, scan_fmt, &load_avg_one_minute, &load_avg_five_minutes, &load_avg_ten_minutes);
 
-         values[LOAD_AVG_ONE_MINUTE]   = Float4GetDatum(load_avg_one_minute);
+         values[LOAD_AVG_ONE_MINUTE] = Float4GetDatum(load_avg_one_minute);
          values[LOAD_AVG_FIVE_MINUTES] = Float4GetDatum(load_avg_five_minutes);
-         values[LOAD_AVG_TEN_MINUTES]  = Float4GetDatum(load_avg_ten_minutes);
+         values[LOAD_AVG_TEN_MINUTES] = Float4GetDatum(load_avg_ten_minutes);
 
          tuplestore_putvalues(tupstore, tupdesc, values, nulls);
       }

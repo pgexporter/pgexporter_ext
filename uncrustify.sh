@@ -10,4 +10,4 @@ function indent()
 
 indent "src/*.c"
 indent "src/include/*.h"
-indent "src/libpgexporter/*.c"
+indent "src/pgexporter_ext/*.c"
