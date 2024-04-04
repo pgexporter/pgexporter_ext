@@ -487,7 +487,9 @@ os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
       nulls[OS_INFO_DOMAIN_NAME] = true;
    }
 
-   os_info_file = fopen("/etc/system-release", "r");
+   snprintf(&os_name[0], sizeof(os_name), "%s", "Linux");
+
+   os_info_file = fopen("/etc/os-release", "r");
 
    if (!os_info_file)
    {
@@ -495,9 +497,13 @@ os_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
    }
    else
    {
-      if (fgets(&buffer[0], max_length, os_info_file) != NULL)
+      while (fgets(&buffer[0], max_length, os_info_file) != NULL)
       {
-         memcpy(os_name, buffer, strlen(buffer) - 1);
+         if (strstr(buffer, "PRETTY_NAME") != NULL)
+         {
+            memcpy(os_name, buffer + strlen("PRETTY_NAME=\""), strlen(buffer) - strlen("PRETTY_NAME=\"") - 2);
+            break;
+         }
       }
 
       fclose(os_info_file);
