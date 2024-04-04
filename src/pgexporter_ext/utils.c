@@ -1,20 +1,20 @@
 /*
  * Copyright (C) 2024 The pgexporter community
- * 
+ *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this list
  * of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright notice, this
  * list of conditions and the following disclaimer in the documentation and/or other
  * materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the copyright holder nor the names of its contributors may
  * be used to endorse or promote products derived from this software without specific
  * prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -47,8 +47,8 @@ unsigned long
 pgexporter_ext_directory_size(char* directory)
 {
    unsigned long total_size = 0;
-   DIR *dir;
-   struct dirent *entry;
+   DIR* dir;
+   struct dirent* entry;
    char* p;
    struct stat st;
    unsigned long l;
@@ -123,7 +123,7 @@ unsigned long
 pgexporter_ext_free_space(char* path)
 {
    struct statvfs buf;
-   
+
    if (statvfs(path, &buf))
    {
       errno = 0;
@@ -137,7 +137,7 @@ unsigned long
 pgexporter_ext_total_space(char* path)
 {
    struct statvfs buf;
-   
+
    if (statvfs(path, &buf))
    {
       errno = 0;
@@ -223,7 +223,7 @@ pgexporter_ext_append(char* orig, char* s)
 
    n = (char*)realloc(orig, orig_length + s_length + 1);
 
-   memcpy(n + orig_length, s, s_length); 
+   memcpy(n + orig_length, s, s_length);
 
    n[orig_length + s_length] = '\0';
 
