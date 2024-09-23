@@ -1,5 +1,5 @@
 # pgexporter_ext extension
 comment = 'pgexporter extension for extra metrics'
-default_version = '0.2.4'
+default_version = '0.2.5'
 module_pathname = '$libdir/pgexporter_ext'
 relocatable = true
