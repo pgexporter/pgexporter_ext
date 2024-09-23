@@ -248,8 +248,6 @@ pgexporter_get_functions(PG_FUNCTION_ARGS)
       tuplestore_putvalues(tupstore, tupdesc, values, nulls);
    }
 
-   tuplestore_donestoring(tupstore);
-
    return (Datum)0;
 }
 
@@ -312,8 +310,6 @@ pgexporter_os_info(PG_FUNCTION_ARGS)
 
    os_info(tupstore, tupdesc);
 
-   tuplestore_donestoring(tupstore);
-
    return (Datum)0;
 }
 
@@ -342,8 +338,6 @@ pgexporter_cpu_info(PG_FUNCTION_ARGS)
    MemoryContextSwitchTo(oldcontext);
 
    cpu_info(tupstore, tupdesc);
-
-   tuplestore_donestoring(tupstore);
 
    return (Datum)0;
 }
@@ -374,8 +368,6 @@ pgexporter_memory_info(PG_FUNCTION_ARGS)
 
    memory_info(tupstore, tupdesc);
 
-   tuplestore_donestoring(tupstore);
-
    return (Datum)0;
 }
 
@@ -405,8 +397,6 @@ pgexporter_network_info(PG_FUNCTION_ARGS)
 
    network_info(tupstore, tupdesc);
 
-   tuplestore_donestoring(tupstore);
-
    return (Datum)0;
 }
 
@@ -435,8 +425,6 @@ pgexporter_load_avg(PG_FUNCTION_ARGS)
    MemoryContextSwitchTo(oldcontext);
 
    load_avg(tupstore, tupdesc);
-
-   tuplestore_donestoring(tupstore);
 
    return (Datum)0;
 }
