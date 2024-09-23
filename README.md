@@ -16,7 +16,7 @@ See [Getting Started](./doc/GETTING_STARTED.md) on how to get started with `pgex
 
 ## Tested platforms
 
-* [PostgreSQL](https://www.postgresql.org/) 10+
+* [PostgreSQL](https://www.postgresql.org/) 13+
 * [Fedora](https://getfedora.org/) 32+
 * [RHEL](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) 8.x with
   [AppStream](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/installing_managing_and_removing_user-space_components/using-appstream_using-appstream)
