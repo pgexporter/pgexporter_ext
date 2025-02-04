@@ -34,6 +34,10 @@ CREATE EXTENSION pgexporter_ext;
 The `pgexporter` user must have the `pg_monitor` role to access to the functions
 in the extension.
 
+```
+GRANT pg_monitor TO pgexporter;
+```
+
 [pgexporter](https://github.com/pgexporter/pgexporter) is now able to use the extended functionality
 of [pgexporter_ext](https://github.com/pgexporter/pgexporter_ext).
 
