@@ -1,0 +1,303 @@
+{
+    "version": 16,
+    "metrics": [
+        {
+            "queries": [
+                {
+                    "query": "SELECT * FROM pgexporter_os_info();",
+                    "version": 10,
+                    "columns": [
+                        {
+                            "name": "name",
+                            "type": "label",
+                            "description": "Operating System Name"
+                        },
+                        {
+                            "name": "version",
+                            "type": "label",
+                            "description": "Operating System Version"
+                        },
+                        {
+                            "name": "architecture",
+                            "type": "label",
+                            "description": "System Architecture"
+                        },
+                        {
+                            "name": "host_name",
+                            "type": "label",
+                            "description": "Host Name"
+                        },
+                        {
+                            "name": "domain_name",
+                            "type": "label",
+                            "description": "Domain Name"
+                        },
+                        {
+                            "name": "process_count",
+                            "type": "gauge",
+                            "description": "Number of Running Processes"
+                        },
+                        {
+                            "name": "uptime_seconds",
+                            "type": "gauge",
+                            "description": "System Uptime in Seconds"
+                        }
+                    ]
+                }
+            ],
+            "tag": "ext_os_info",
+            "sort": "name",
+            "collector": "system_info",
+            "server": "primary"
+        },
+        {
+            "queries": [
+                {
+                    "query": "SELECT * FROM pgexporter_cpu_info();",
+                    "version": 10,
+                    "columns": [
+                        {
+                            "name": "vendor",
+                            "type": "label",
+                            "description": "CPU Vendor"
+                        },
+                        {
+                            "name": "model_name",
+                            "type": "label",
+                            "description": "CPU Model Name"
+                        },
+                        {
+                            "name": "number_of_cores",
+                            "type": "gauge",
+                            "description": "Number of CPU Cores"
+                        },
+                        {
+                            "name": "clock_speed_hz",
+                            "type": "gauge",
+                            "description": "CPU Clock Speed in Hz"
+                        },
+                        {
+                            "name": "l1dcache_size",
+                            "type": "gauge",
+                            "description": "L1 Data Cache Size in KB"
+                        },
+                        {
+                            "name": "l1icache_size",
+                            "type": "gauge",
+                            "description": "L1 Instruction Cache Size in KB"
+                        },
+                        {
+                            "name": "l2cache_size",
+                            "type": "gauge",
+                            "description": "L2 Cache Size in KB"
+                        },
+                        {
+                            "name": "l3cache_size",
+                            "type": "gauge",
+                            "description": "L3 Cache Size in KB"
+                        }
+                    ]
+                }
+            ],
+            "tag": "ext_cpu_info",
+            "sort": "name",
+            "collector": "system_info",
+            "server": "primary"
+        },
+        {
+            "queries": [
+                {
+                    "query": "SELECT * FROM pgexporter_memory_info();",
+                    "version": 10,
+                    "columns": [
+                        {
+                            "name": "total_memory",
+                            "type": "gauge",
+                            "description": "Total System Memory in Bytes"
+                        },
+                        {
+                            "name": "used_memory",
+                            "type": "gauge",
+                            "description": "Used System Memory in Bytes"
+                        },
+                        {
+                            "name": "free_memory",
+                            "type": "gauge",
+                            "description": "Free System Memory in Bytes"
+                        },
+                        {
+                            "name": "swap_total",
+                            "type": "gauge",
+                            "description": "Total Swap Space in Bytes"
+                        },
+                        {
+                            "name": "swap_used",
+                            "type": "gauge",
+                            "description": "Used Swap Space in Bytes"
+                        },
+                        {
+                            "name": "swap_free",
+                            "type": "gauge",
+                            "description": "Free Swap Space in Bytes"
+                        },
+                        {
+                            "name": "cache_total",
+                            "type": "gauge",
+                            "description": "Total Cache in Bytes"
+                        }
+                    ]
+                }
+            ],
+            "tag": "ext_memory_info",
+            "sort": "name",
+            "collector": "system_info",
+            "server": "primary"
+        },
+        {
+            "queries": [
+                {
+                    "query": "SELECT * FROM pgexporter_load_avg();",
+                    "version": 10,
+                    "columns": [
+                        {
+                            "name": "load_avg_one_minute",
+                            "type": "gauge",
+                            "description": "System Load Average (1 min)"
+                        },
+                        {
+                            "name": "load_avg_five_minutes",
+                            "type": "gauge",
+                            "description": "System Load Average (5 min)"
+                        },
+                        {
+                            "name": "load_avg_ten_minutes",
+                            "type": "gauge",
+                            "description": "System Load Average (10 min)"
+                        }
+                    ]
+                }
+            ],
+            "tag": "ext_load_avg",
+            "sort": "name",
+            "collector": "system_info",
+            "server": "primary"
+        },
+        {
+            "queries": [
+                {
+                    "query": "SELECT * FROM pgexporter_network_info();",
+                    "version": 10,
+                    "columns": [
+                        {
+                            "name": "interface_name",
+                            "type": "label",
+                            "description": "Network Interface Name"
+                        },
+                        {
+                            "name": "ip_address",
+                            "type": "label",
+                            "description": "IP Address"
+                        },
+                        {
+                            "name": "tx_bytes",
+                            "type": "counter",
+                            "description": "Total Bytes Transmitted"
+                        },
+                        {
+                            "name": "tx_packets",
+                            "type": "counter",
+                            "description": "Total Packets Transmitted"
+                        },
+                        {
+                            "name": "tx_errors",
+                            "type": "counter",
+                            "description": "Transmission Errors"
+                        },
+                        {
+                            "name": "tx_dropped",
+                            "type": "counter",
+                            "description": "Dropped Transmissions"
+                        },
+                        {
+                            "name": "rx_bytes",
+                            "type": "counter",
+                            "description": "Total Bytes Received"
+                        },
+                        {
+                            "name": "rx_packets",
+                            "type": "counter",
+                            "description": "Total Packets Received"
+                        },
+                        {
+                            "name": "rx_errors",
+                            "type": "counter",
+                            "description": "Reception Errors"
+                        },
+                        {
+                            "name": "rx_dropped",
+                            "type": "counter",
+                            "description": "Dropped Receptions"
+                        },
+                        {
+                            "name": "link_speed_mbps",
+                            "type": "gauge",
+                            "description": "Link Speed in Mbps"
+                        }
+                    ]
+                }
+            ],
+            "tag": "ext_network_info",
+            "sort": "name",
+            "collector": "system_info",
+            "server": "primary"
+        },
+        {
+            "queries": [
+                {
+                    "query": "SELECT dir as mount_point, pgexporter_free_space(dir) as free_bytes FROM (SELECT DISTINCT dir FROM pg_ls_dir('.') AS dir) AS dirs;",
+                    "version": 10,
+                    "columns": [
+                        {
+                            "name": "mount_point",
+                            "type": "label",
+                            "description": "Mount Point"
+                        },
+                        {
+                            "name": "free_bytes",
+                            "type": "gauge",
+                            "description": "Free Space in Bytes"
+                        }
+                    ]
+                }
+            ],
+            "tag": "ext_free_space",
+            "sort": "name",
+            "collector": "system_info",
+            "server": "primary"
+        },
+        {
+            "queries": [
+                {
+                    "query": "SELECT dir as mount_point, pgexporter_used_space(dir) as used_bytes FROM (SELECT DISTINCT dir FROM pg_ls_dir('.') AS dir) AS dirs;",
+                    "version": 10,
+                    "columns": [
+                        {
+                            "name": "mount_point",
+                            "type": "label",
+                            "description": "Mount Point"
+                        },
+                        {
+                            "name": "used_bytes",
+                            "type": "gauge",
+                            "description": "Used Space in Bytes"
+                        }
+                    ]
+                }
+            ],
+            "tag": "ext_used_space",
+            "sort": "name",
+            "collector": "system_info",
+            "server": "primary"
+        }
+    ]
+}

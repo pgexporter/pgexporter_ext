@@ -41,6 +41,7 @@ GRANT pg_monitor TO pgexporter;
 [pgexporter](https://github.com/pgexporter/pgexporter) is now able to use the extended functionality
 of [pgexporter_ext](https://github.com/pgexporter/pgexporter_ext).
 
+For having custom metrics available use the `Y` (yaml) or `J` (json) flag with queries. See examples in the [`contrib/`](./contrib/) directory.
 ## Closing
 
 The [pgexporter](https://github.com/pgexporter/pgexporter_ext) community hopes that you find
