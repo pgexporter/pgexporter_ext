@@ -61,6 +61,10 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${EXT_INCLUDE_DIR}
     ${EXT_INCLUDE_SERVER_DIR}
+    ${ZLIB_INCLUDE_DIRS}
+    ${BZIP2_INCLUDE_DIRS}
+    ${ZSTD_INCLUDE_DIRS}
+    ${LZ4_INCLUDE_DIRS}
   )
 
   #
@@ -68,6 +72,10 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   #
   link_libraries(
     ${EXT_LIB_DIR}/libpq.so
+    ${ZLIB_LIBRARIES}
+    ${BZIP2_LIBRARIES}
+    ${ZSTD_LIBRARIES}
+    ${LZ4_LIBRARIES}
   )
 
 else()
@@ -84,6 +92,10 @@ else()
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${EXT_INCLUDE_DIR}
     ${EXT_INCLUDE_SERVER_DIR}
+    ${ZLIB_INCLUDE_DIRS}
+    ${BZIP2_INCLUDE_DIRS}
+    ${ZSTD_INCLUDE_DIRS}
+    ${LZ4_INCLUDE_DIRS}
   )
 
   #
@@ -91,6 +103,10 @@ else()
   #
   link_libraries(
     ${EXT_LIB_DIR}/libpq.so
+    ${ZLIB_LIBRARIES}
+    ${BZIP2_LIBRARIES}
+    ${ZSTD_LIBRARIES}
+    ${LZ4_LIBRARIES}
   )
 endif()
 

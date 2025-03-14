@@ -39,6 +39,7 @@
 #include <netdb.h>
 #include <sys/sysinfo.h>
 #include <sys/utsname.h>
+#include <sys/stat.h>
 #endif
 #include <sys/types.h>
 
@@ -49,6 +50,7 @@
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 
 PG_MODULE_MAGIC;
 
@@ -107,8 +109,10 @@ static uint64_t kb_to_bytes(char* s);
 static void     network_info(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static void     get_file_value(char* filename, char* interface, int64_t* value);
 static void     load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc);
+static int cache_refresh_interval = 300;
 
 #define NUMBER_OF_FUNCTIONS 11
+#define NUMBER_OF_LOG_FUNCTIONS 12
 __attribute__((used))
 static struct function
 {
@@ -117,6 +121,28 @@ static struct function
    char description[128];
    char type[16];
 } f;
+
+typedef struct
+{
+   char level[16];
+   int count;
+   time_t last_updated;
+} LogCacheEntry;
+
+LogCacheEntry cache[NUMBER_OF_LOG_FUNCTIONS] = {
+   {"DEBUG5", 0, 0},
+   {"DEBUG4", 0, 0},
+   {"DEBUG3", 0, 0},
+   {"DEBUG2", 0, 0},
+   {"DEBUG1", 0, 0},
+   {"INFO", 0, 0},
+   {"NOTICE", 0, 0},
+   {"WARNING", 0, 0},
+   {"ERROR", 0, 0},
+   {"LOG", 0, 0},
+   {"FATAL", 0, 0},
+   {"PANIC", 0, 0}
+};
 
 static struct function functions[] = {
    /* {"pgexporter_information_ext", false, "pgexporter extension information", ""}, */
@@ -130,12 +156,41 @@ static struct function functions[] = {
    {"pgexporter_cpu_info", false, "The CPU information", "gauge"},
    {"pgexporter_memory_info", false, "The memory information", "gauge"},
    {"pgexporter_network_info", false, "The network information", "gauge"},
-   {"pgexporter_load_avg", false, "The load averages", "gauge"}
+   {"pgexporter_load_avg", false, "The load averages", "gauge"},
+};
+
+static struct function log_metrics[] = {
+   {"pgexporter_log_debug5", false, "Debug level 5 log count", "gauge"},
+   {"pgexporter_log_debug4", false, "Debug level 4 log count", "gauge"},
+   {"pgexporter_log_debug3", false, "Debug level 3 log count", "gauge"},
+   {"pgexporter_log_debug2", false, "Debug level 2 log count", "gauge"},
+   {"pgexporter_log_debug1", false, "Debug level 1 log count", "gauge"},
+   {"pgexporter_log_info", false, "Info log count", "gauge"},
+   {"pgexporter_log_notice", false, "Notice log count", "gauge"},
+   {"pgexporter_log_warning", false, "Warning log count", "gauge"},
+   {"pgexporter_log_error", false, "Error log count", "gauge"},
+   {"pgexporter_log_log", false, "Log count", "gauge"},
+   {"pgexporter_log_fatal", false, "Fatal log count", "gauge"},
+   {"pgexporter_log_panic", false, "Panic log count", "gauge"}
 };
 
 void
 _PG_init(void)
 {
+   DefineCustomIntVariable(
+      "pgexporter.log_cache_refresh_interval",    // GUC name
+      "Interval (in seconds) to refresh the log cache.",    // Description
+      NULL,
+      &cache_refresh_interval,
+      300,
+      1,
+      3600,
+      PGC_SUSET,
+      GUC_UNIT_S,
+      NULL,
+      NULL,
+      NULL
+      );
 }
 
 void
@@ -158,6 +213,62 @@ PG_FUNCTION_INFO_V1(pgexporter_memory_info);
 PG_FUNCTION_INFO_V1(pgexporter_network_info);
 
 PG_FUNCTION_INFO_V1(pgexporter_load_avg);
+
+PG_FUNCTION_INFO_V1(pgexporter_log_debug5);
+PG_FUNCTION_INFO_V1(pgexporter_log_debug4);
+PG_FUNCTION_INFO_V1(pgexporter_log_debug3);
+PG_FUNCTION_INFO_V1(pgexporter_log_debug2);
+PG_FUNCTION_INFO_V1(pgexporter_log_debug1);
+PG_FUNCTION_INFO_V1(pgexporter_log_info);
+PG_FUNCTION_INFO_V1(pgexporter_log_notice);
+PG_FUNCTION_INFO_V1(pgexporter_log_warning);
+PG_FUNCTION_INFO_V1(pgexporter_log_error);
+PG_FUNCTION_INFO_V1(pgexporter_log_log);
+PG_FUNCTION_INFO_V1(pgexporter_log_fatal);
+PG_FUNCTION_INFO_V1(pgexporter_log_panic);
+
+bool
+cache_is_valid(const char* level)
+{
+   time_t now = time(NULL);
+
+   for (int i = 0; i < NUMBER_OF_LOG_FUNCTIONS; i++)
+   {
+      if (strcmp(cache[i].level, level) == 0)
+      {
+         return (now - cache[i].last_updated) < cache_refresh_interval;
+      }
+   }
+
+   return false;
+}
+
+int
+cache_get_count(const char* level)
+{
+   for (int i = 0; i < NUMBER_OF_LOG_FUNCTIONS; i++)
+   {
+      if (strcmp(cache[i].level, level) == 0)
+      {
+         return cache[i].count;
+      }
+   }
+   return 0;
+}
+
+void
+cache_update(const char* level, int count)
+{
+   for (int i = 0; i < NUMBER_OF_LOG_FUNCTIONS; i++)
+   {
+      if (strcmp(cache[i].level, level) == 0)
+      {
+         cache[i].count = count;
+         cache[i].last_updated = time(NULL);
+         return;
+      }
+   }
+}
 
 Datum
 pgexporter_information_ext(PG_FUNCTION_ARGS)
@@ -206,6 +317,14 @@ pgexporter_is_supported(PG_FUNCTION_ARGS)
       }
    }
 
+   for (int i = 0; !found && i < NUMBER_OF_LOG_FUNCTIONS; i++)
+   {
+      if (!strcmp(log_metrics[i].name, fname))
+      {
+         found = true;
+      }
+   }
+
    result = DatumGetBool(found);
 
    PG_RETURN_BOOL(result);
@@ -245,6 +364,14 @@ pgexporter_get_functions(PG_FUNCTION_ARGS)
       values[1] = DatumGetBool(functions[i].has_input);
       values[2] = CStringGetTextDatum(functions[i].description);
       values[3] = CStringGetTextDatum(functions[i].type);
+      tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+   }
+   for (int i = 0; i < NUMBER_OF_LOG_FUNCTIONS; i++)
+   {
+      values[0] = CStringGetTextDatum(log_metrics[i].name);
+      values[1] = DatumGetBool(log_metrics[i].has_input);
+      values[2] = CStringGetTextDatum(log_metrics[i].description);
+      values[3] = CStringGetTextDatum(log_metrics[i].type);
       tuplestore_putvalues(tupstore, tupdesc, values, nulls);
    }
 
@@ -1112,4 +1239,76 @@ error:
    tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 
 #endif
+}
+
+Datum
+pgexporter_log_debug5(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG5"));
+}
+
+Datum
+pgexporter_log_debug4(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG4"));
+}
+
+Datum
+pgexporter_log_debug3(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG3"));
+}
+
+Datum
+pgexporter_log_debug2(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG2"));
+}
+
+Datum
+pgexporter_log_debug1(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG1"));
+}
+
+Datum
+pgexporter_log_info(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("INFO"));
+}
+
+Datum
+pgexporter_log_notice(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("NOTICE"));
+}
+
+Datum
+pgexporter_log_warning(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("WARNING"));
+}
+
+Datum
+pgexporter_log_error(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("ERROR"));
+}
+
+Datum
+pgexporter_log_log(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("LOG"));
+}
+
+Datum
+pgexporter_log_fatal(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("FATAL"));
+}
+
+Datum
+pgexporter_log_panic(PG_FUNCTION_ARGS)
+{
+   PG_RETURN_INT32(pgexporter_ext_parse_log_files("PANIC"));
 }

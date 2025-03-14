@@ -31,8 +31,7 @@ See [Getting Started](./doc/GETTING_STARTED.md) on how to get started with `pgex
 * [PostgreSQL](https://www.postgresql.org/)
 
 ```sh
-dnf install git gcc cmake make postgresql-devel
-```
+dnf install git gcc cmake make postgresql-devel zlib zlib-devel libzstd libzstd-devel lz4 lz4-devel bzip2 bzip2-devel libpq-devel libpq
 
 **NOTE**: It may happen that build fails due to `"postgres.h"` not being found. In that case, uninstall the package `postgresql-devel` and instead install `postgresql-server-devel`:
 

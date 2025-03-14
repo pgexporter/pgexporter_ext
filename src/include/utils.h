@@ -36,6 +36,7 @@ extern "C" {
 #include <pgexporter_ext.h>
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 /**
  * Get the size of a path
@@ -68,6 +69,23 @@ pgexporter_ext_total_space(char* path);
  */
 char*
 pgexporter_ext_clean_string(char* s);
+
+/**
+ * Does a string end with another string
+ * @param str The string
+ * @param suffix The suffix
+ * @return The result
+ */
+bool
+pgexporter_ext_ends_with(char* str, char* suffix);
+
+/**
+ * Parse the log files
+ * @param level The log level
+ * @return The result
+ */
+int
+pgexporter_ext_parse_log_files(const char* level);
 
 #ifdef __cplusplus
 }
