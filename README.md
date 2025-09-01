@@ -40,8 +40,6 @@ dnf remove postgresql-devel
 dnf install postgresql-server-devel
 ```
 
-Alternative [clang 8+](https://clang.llvm.org/) can be used.
-
 ### Release build
 
 The following commands will install `pgexporter` in the `/usr/local` hierarchy.
@@ -51,7 +49,7 @@ git clone https://github.com/pgexporter/pgexporter_ext.git
 cd pgexporter_ext
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_C_COMPILER=gcc ..
 make
 sudo make install
 ```
@@ -65,7 +63,7 @@ git clone https://github.com/pgexporter/pgexporter_ext.git
 cd pgexporter_ext
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_BUILD_TYPE=Debug ..
 make
 ```
 
