@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Update system
+      run: sudo apt update -y
+    - name: Install gcc-9
+      run: sudo apt install -y gcc-9
+    - name: Install PostgreSQL
+      run: sudo apt install -y postgresql-server-dev-all
+    - name: Update alternatives
+      run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60
+    - name: mkdir
+      run: mkdir build
+      working-directory: /home/runner/work/pgexporter/pgexporter_ext/
+    - name: cmake
+      run: cmake -DCMAKE_BUILD_TYPE=Release ..
+      working-directory: /home/runner/work/pgexporter/pgexporter_ext/build/
+    - name: make
+      run: make
+      working-directory: /home/runner/work/pgexporter/pgexporter_ext/build/
