@@ -44,7 +44,7 @@ extern "C" {
  * @return The result
  */
 unsigned long
-pgexporter_ext_directory_size(char* path);
+pgexporter_get_directory_size(char* path);
 
 /**
  * Get the free space for a path
@@ -52,7 +52,7 @@ pgexporter_ext_directory_size(char* path);
  * @return The result
  */
 unsigned long
-pgexporter_ext_free_space(char* path);
+pgexporter_get_free_space(char* path);
 
 /**
  * Get the total space for a path
@@ -60,7 +60,7 @@ pgexporter_ext_free_space(char* path);
  * @return The result
  */
 unsigned long
-pgexporter_ext_total_space(char* path);
+pgexporter_get_total_space(char* path);
 
 /**
  * Clean a string

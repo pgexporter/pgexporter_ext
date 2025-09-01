@@ -57,7 +57,7 @@ static int pgexporter_ext_process_lz4_log_file(const char* file_path, const char
 static int pgexporter_ext_process_zstd_log_file(const char* file_path, const char* level);
 
 unsigned long
-pgexporter_ext_directory_size(char* directory)
+pgexporter_get_directory_size(char* directory)
 {
    unsigned long total_size = 0;
    DIR* dir;
@@ -84,7 +84,7 @@ pgexporter_ext_directory_size(char* directory)
 
          snprintf(path, sizeof(path), "%s/%s", directory, entry->d_name);
 
-         total_size += pgexporter_ext_directory_size(path);
+         total_size += pgexporter_get_directory_size(path);
       }
       else if (entry->d_type == DT_REG)
       {
@@ -133,7 +133,7 @@ pgexporter_ext_directory_size(char* directory)
 }
 
 unsigned long
-pgexporter_ext_free_space(char* path)
+pgexporter_get_free_space(char* path)
 {
    struct statvfs buf;
 
@@ -147,7 +147,7 @@ pgexporter_ext_free_space(char* path)
 }
 
 unsigned long
-pgexporter_ext_total_space(char* path)
+pgexporter_get_total_space(char* path)
 {
    struct statvfs buf;
 

@@ -33,6 +33,7 @@
 /* system */
 #include <ctype.h>
 #include <ifaddrs.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_LINUX
@@ -45,10 +46,12 @@
 
 /* PostgreSQL */
 #include "postgres.h"
-#include "fmgr.h"
-#include "funcapi.h"
+#include "server/fmgr.h"
+#include "server/funcapi.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
+#include "server/utils/tuplestore.h"
+
 #include "utils/builtins.h"
 #include "utils/guc.h"
 
@@ -145,33 +148,33 @@ LogCacheEntry cache[NUMBER_OF_LOG_FUNCTIONS] = {
 };
 
 static struct function functions[] = {
-   /* {"pgexporter_information_ext", false, "pgexporter extension information", ""}, */
-   {"pgexporter_version_ext", false, "pgexporter extension version", "gauge"},
-   {"pgexporter_is_supported", true, "Is the pgexporter function supported", ""},
-   {"pgexporter_get_functions", false, "Get the pgexporter functions", ""},
-   {"pgexporter_used_space", true, "Get the used disk space", "gauge"},
-   {"pgexporter_free_space", true, "Get the free disk space", "gauge"},
-   {"pgexporter_total_space", true, "Get the total disk space", "gauge"},
-   {"pgexporter_os_info", false, "The OS information", "gauge"},
-   {"pgexporter_cpu_info", false, "The CPU information", "gauge"},
-   {"pgexporter_memory_info", false, "The memory information", "gauge"},
-   {"pgexporter_network_info", false, "The network information", "gauge"},
-   {"pgexporter_load_avg", false, "The load averages", "gauge"},
+   /* {"pgexporter_ext_information", false, "pgexporter extension information", ""}, */
+   {"pgexporter_ext_version", false, "pgexporter extension version", "gauge"},
+   {"pgexporter_ext_is_supported", true, "Is the pgexporter function supported", ""},
+   {"pgexporter_ext_get_functions", false, "Get the pgexporter functions", ""},
+   {"pgexporter_ext_used_space", true, "Get the used disk space", "gauge"},
+   {"pgexporter_ext_free_space", true, "Get the free disk space", "gauge"},
+   {"pgexporter_ext_total_space", true, "Get the total disk space", "gauge"},
+   {"pgexporter_ext_os_info", false, "The OS information", "gauge"},
+   {"pgexporter_ext_cpu_info", false, "The CPU information", "gauge"},
+   {"pgexporter_ext_memory_info", false, "The memory information", "gauge"},
+   {"pgexporter_ext_network_info", false, "The network information", "gauge"},
+   {"pgexporter_ext_load_avg", false, "The load averages", "gauge"},
 };
 
 static struct function log_metrics[] = {
-   {"pgexporter_log_debug5", false, "Debug level 5 log count", "gauge"},
-   {"pgexporter_log_debug4", false, "Debug level 4 log count", "gauge"},
-   {"pgexporter_log_debug3", false, "Debug level 3 log count", "gauge"},
-   {"pgexporter_log_debug2", false, "Debug level 2 log count", "gauge"},
-   {"pgexporter_log_debug1", false, "Debug level 1 log count", "gauge"},
-   {"pgexporter_log_info", false, "Info log count", "gauge"},
-   {"pgexporter_log_notice", false, "Notice log count", "gauge"},
-   {"pgexporter_log_warning", false, "Warning log count", "gauge"},
-   {"pgexporter_log_error", false, "Error log count", "gauge"},
-   {"pgexporter_log_log", false, "Log count", "gauge"},
-   {"pgexporter_log_fatal", false, "Fatal log count", "gauge"},
-   {"pgexporter_log_panic", false, "Panic log count", "gauge"}
+   {"pgexporter_ext_log_debug5", false, "Debug level 5 log count", "gauge"},
+   {"pgexporter_ext_log_debug4", false, "Debug level 4 log count", "gauge"},
+   {"pgexporter_ext_log_debug3", false, "Debug level 3 log count", "gauge"},
+   {"pgexporter_ext_log_debug2", false, "Debug level 2 log count", "gauge"},
+   {"pgexporter_ext_log_debug1", false, "Debug level 1 log count", "gauge"},
+   {"pgexporter_ext_log_info", false, "Info log count", "gauge"},
+   {"pgexporter_ext_log_notice", false, "Notice log count", "gauge"},
+   {"pgexporter_ext_log_warning", false, "Warning log count", "gauge"},
+   {"pgexporter_ext_log_error", false, "Error log count", "gauge"},
+   {"pgexporter_ext_log_log", false, "Log count", "gauge"},
+   {"pgexporter_ext_log_fatal", false, "Fatal log count", "gauge"},
+   {"pgexporter_ext_log_panic", false, "Panic log count", "gauge"}
 };
 
 void
@@ -198,34 +201,34 @@ _PG_fini(void)
 {
 }
 
-PG_FUNCTION_INFO_V1(pgexporter_information_ext);
-PG_FUNCTION_INFO_V1(pgexporter_version_ext);
-PG_FUNCTION_INFO_V1(pgexporter_is_supported);
-PG_FUNCTION_INFO_V1(pgexporter_get_functions);
+PG_FUNCTION_INFO_V1(pgexporter_ext_information);
+PG_FUNCTION_INFO_V1(pgexporter_ext_version);
+PG_FUNCTION_INFO_V1(pgexporter_ext_is_supported);
+PG_FUNCTION_INFO_V1(pgexporter_ext_get_functions);
 
-PG_FUNCTION_INFO_V1(pgexporter_used_space);
-PG_FUNCTION_INFO_V1(pgexporter_free_space);
-PG_FUNCTION_INFO_V1(pgexporter_total_space);
+PG_FUNCTION_INFO_V1(pgexporter_ext_used_space);
+PG_FUNCTION_INFO_V1(pgexporter_ext_free_space);
+PG_FUNCTION_INFO_V1(pgexporter_ext_total_space);
 
-PG_FUNCTION_INFO_V1(pgexporter_os_info);
-PG_FUNCTION_INFO_V1(pgexporter_cpu_info);
-PG_FUNCTION_INFO_V1(pgexporter_memory_info);
-PG_FUNCTION_INFO_V1(pgexporter_network_info);
+PG_FUNCTION_INFO_V1(pgexporter_ext_os_info);
+PG_FUNCTION_INFO_V1(pgexporter_ext_cpu_info);
+PG_FUNCTION_INFO_V1(pgexporter_ext_memory_info);
+PG_FUNCTION_INFO_V1(pgexporter_ext_network_info);
 
-PG_FUNCTION_INFO_V1(pgexporter_load_avg);
+PG_FUNCTION_INFO_V1(pgexporter_ext_load_avg);
 
-PG_FUNCTION_INFO_V1(pgexporter_log_debug5);
-PG_FUNCTION_INFO_V1(pgexporter_log_debug4);
-PG_FUNCTION_INFO_V1(pgexporter_log_debug3);
-PG_FUNCTION_INFO_V1(pgexporter_log_debug2);
-PG_FUNCTION_INFO_V1(pgexporter_log_debug1);
-PG_FUNCTION_INFO_V1(pgexporter_log_info);
-PG_FUNCTION_INFO_V1(pgexporter_log_notice);
-PG_FUNCTION_INFO_V1(pgexporter_log_warning);
-PG_FUNCTION_INFO_V1(pgexporter_log_error);
-PG_FUNCTION_INFO_V1(pgexporter_log_log);
-PG_FUNCTION_INFO_V1(pgexporter_log_fatal);
-PG_FUNCTION_INFO_V1(pgexporter_log_panic);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_debug5);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_debug4);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_debug3);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_debug2);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_debug1);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_info);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_notice);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_warning);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_error);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_log);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_fatal);
+PG_FUNCTION_INFO_V1(pgexporter_ext_log_panic);
 
 bool
 cache_is_valid(const char* level)
@@ -271,7 +274,7 @@ cache_update(const char* level, int count)
 }
 
 Datum
-pgexporter_information_ext(PG_FUNCTION_ARGS)
+pgexporter_ext_information(PG_FUNCTION_ARGS)
 {
    Datum version;
    char i[1024];
@@ -289,7 +292,7 @@ pgexporter_information_ext(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_version_ext(PG_FUNCTION_ARGS)
+pgexporter_ext_version_ext(PG_FUNCTION_ARGS)
 {
    Datum version;
    char v[1024];
@@ -303,7 +306,7 @@ pgexporter_version_ext(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_is_supported(PG_FUNCTION_ARGS)
+pgexporter_ext_is_supported(PG_FUNCTION_ARGS)
 {
    Datum result;
    bool found = false;
@@ -331,7 +334,7 @@ pgexporter_is_supported(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_get_functions(PG_FUNCTION_ARGS)
+pgexporter_ext_get_functions(PG_FUNCTION_ARGS)
 {
    ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
    TupleDesc tupdesc;
@@ -379,40 +382,40 @@ pgexporter_get_functions(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_used_space(PG_FUNCTION_ARGS)
+pgexporter_ext_used_space(PG_FUNCTION_ARGS)
 {
    unsigned long size;
    char* directory = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-   size = pgexporter_ext_directory_size(directory);
+   size = pgexporter_get_directory_size(directory);
 
    PG_RETURN_INT64(size);
 }
 
 Datum
-pgexporter_free_space(PG_FUNCTION_ARGS)
+pgexporter_ext_free_space(PG_FUNCTION_ARGS)
 {
    unsigned long size;
    char* directory = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-   size = pgexporter_ext_free_space(directory);
+   size = pgexporter_get_free_space(directory);
 
    PG_RETURN_INT64(size);
 }
 
 Datum
-pgexporter_total_space(PG_FUNCTION_ARGS)
+pgexporter_ext_total_space(PG_FUNCTION_ARGS)
 {
    unsigned long size;
    char* directory = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-   size = pgexporter_ext_total_space(directory);
+   size = pgexporter_get_total_space(directory);
 
    PG_RETURN_INT64(size);
 }
 
 Datum
-pgexporter_os_info(PG_FUNCTION_ARGS)
+pgexporter_ext_os_info(PG_FUNCTION_ARGS)
 {
    ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
    TupleDesc tupdesc;
@@ -441,7 +444,7 @@ pgexporter_os_info(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_cpu_info(PG_FUNCTION_ARGS)
+pgexporter_ext_cpu_info(PG_FUNCTION_ARGS)
 {
    ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
    TupleDesc tupdesc;
@@ -470,7 +473,7 @@ pgexporter_cpu_info(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_memory_info(PG_FUNCTION_ARGS)
+pgexporter_ext_memory_info(PG_FUNCTION_ARGS)
 {
    ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
    TupleDesc tupdesc;
@@ -499,7 +502,7 @@ pgexporter_memory_info(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_network_info(PG_FUNCTION_ARGS)
+pgexporter_ext_network_info(PG_FUNCTION_ARGS)
 {
    ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
    TupleDesc tupdesc;
@@ -528,7 +531,7 @@ pgexporter_network_info(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_load_avg(PG_FUNCTION_ARGS)
+pgexporter_ext_load_avg(PG_FUNCTION_ARGS)
 {
    ReturnSetInfo* rsinfo = (ReturnSetInfo*)fcinfo->resultinfo;
    TupleDesc tupdesc;
@@ -1242,73 +1245,73 @@ error:
 }
 
 Datum
-pgexporter_log_debug5(PG_FUNCTION_ARGS)
+pgexporter_ext_log_debug5(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG5"));
 }
 
 Datum
-pgexporter_log_debug4(PG_FUNCTION_ARGS)
+pgexporter_ext_log_debug4(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG4"));
 }
 
 Datum
-pgexporter_log_debug3(PG_FUNCTION_ARGS)
+pgexporter_ext_log_debug3(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG3"));
 }
 
 Datum
-pgexporter_log_debug2(PG_FUNCTION_ARGS)
+pgexporter_ext_log_debug2(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG2"));
 }
 
 Datum
-pgexporter_log_debug1(PG_FUNCTION_ARGS)
+pgexporter_ext_log_debug1(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("DEBUG1"));
 }
 
 Datum
-pgexporter_log_info(PG_FUNCTION_ARGS)
+pgexporter_ext_log_info(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("INFO"));
 }
 
 Datum
-pgexporter_log_notice(PG_FUNCTION_ARGS)
+pgexporter_ext_log_notice(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("NOTICE"));
 }
 
 Datum
-pgexporter_log_warning(PG_FUNCTION_ARGS)
+pgexporter_ext_log_warning(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("WARNING"));
 }
 
 Datum
-pgexporter_log_error(PG_FUNCTION_ARGS)
+pgexporter_ext_log_error(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("ERROR"));
 }
 
 Datum
-pgexporter_log_log(PG_FUNCTION_ARGS)
+pgexporter_ext_log_log(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("LOG"));
 }
 
 Datum
-pgexporter_log_fatal(PG_FUNCTION_ARGS)
+pgexporter_ext_log_fatal(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("FATAL"));
 }
 
 Datum
-pgexporter_log_panic(PG_FUNCTION_ARGS)
+pgexporter_ext_log_panic(PG_FUNCTION_ARGS)
 {
    PG_RETURN_INT32(pgexporter_ext_parse_log_files("PANIC"));
 }
