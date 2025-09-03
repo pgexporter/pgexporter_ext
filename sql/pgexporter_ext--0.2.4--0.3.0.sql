@@ -77,7 +77,7 @@ GRANT EXECUTE ON FUNCTION pgexporter_ext_log_panic() TO pg_monitor;
 
 -- Renamed functions
 
-DROP FUNCTION pgexporter_ext_information;
+DROP FUNCTION IF EXISTS pgexporter_ext_information CASCADE;
 CREATE FUNCTION pgexporter_ext_information() RETURNS text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -85,7 +85,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_information FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_information TO pg_monitor;
 
-DROP FUNCTION pgexporter_ext_version;
+DROP FUNCTION IF EXISTS  pgexporter_ext_version CASCADE;
 CREATE FUNCTION pgexporter_ext_version() RETURNS text
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -93,7 +93,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_version FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_version TO pg_monitor;
 
-DROP FUNCTION pgexporter_is_supported;
+DROP FUNCTION IF EXISTS pgexporter_is_supported CASCADE;
 CREATE FUNCTION pgexporter_ext_is_supported(IN fname text) RETURNS bool
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -101,7 +101,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_is_supported FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_is_supported TO pg_monitor;
 
-DROP FUNCTION pgexporter_get_functions;
+DROP FUNCTION IF EXISTS pgexporter_get_functions CASCADE;
 CREATE FUNCTION pgexporter_ext_get_functions(OUT fname text, OUT has_input bool, OUT description text, OUT ftype text)
 RETURNS SETOF record
 AS 'MODULE_PATHNAME'
@@ -110,7 +110,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_get_functions FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_get_functions TO pg_monitor;
 
-DROP FUNCTION pgexporter_os_info;
+DROP FUNCTION IF EXISTS pgexporter_os_info CASCADE;
 CREATE FUNCTION pgexporter_ext_os_info(OUT name text,
                                        OUT version text,
                                        OUT architecture text,
@@ -126,7 +126,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_os_info FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_os_info TO pg_monitor;
 
-DROP FUNCTION pgexporter_cpu_info;
+DROP FUNCTION IF EXISTS pgexporter_cpu_info CASCADE;
 CREATE FUNCTION pgexporter_ext_cpu_info(OUT vendor text,
                                         OUT model_name text,
                                         OUT number_of_cores int,
@@ -143,7 +143,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_cpu_info FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_cpu_info TO pg_monitor;
 
-DROP FUNCTION pgexporter_memory_info;
+DROP FUNCTION IF EXISTS pgexporter_memory_info CASCADE;
 CREATE FUNCTION pgexporter_ext_memory_info(OUT total_memory int8,
                                            OUT used_memory int8,
                                            OUT free_memory int8,
@@ -159,7 +159,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_memory_info FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_memory_info TO pg_monitor;
 
-DROP FUNCTION pgexporter_load_avg;
+DROP FUNCTION IF EXISTS pgexporter_load_avg CASCADE;
 CREATE FUNCTION pgexporter_ext_load_avg(OUT load_avg_one_minute float4,
                                         OUT load_avg_five_minutes float4,
                                         OUT load_avg_ten_minutes float4
@@ -171,7 +171,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_load_avg FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_load_avg TO pg_monitor;
 
-DROP FUNCTION pgexporter_network_info;
+DROP FUNCTION IF EXISTS pgexporter_network_info CASCADE;
 CREATE FUNCTION pgexporter_ext_network_info(OUT interface_name text,
                                             OUT ip_address text,
                                             OUT tx_bytes int8,
@@ -191,7 +191,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_network_info FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_network_info TO pg_monitor;
 
-DROP FUNCTION pgexporter_used_space;
+DROP FUNCTION IF EXISTS pgexporter_used_space CASCADE;
 CREATE FUNCTION pgexporter_ext_used_space(IN dir text) RETURNS bigint
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -199,7 +199,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_used_space FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_used_space TO pg_monitor;
 
-DROP FUNCTION pgexporter_free_space;
+DROP FUNCTION IF EXISTS pgexporter_free_space CASCADE;
 CREATE FUNCTION pgexporter_ext_free_space(IN dir text) RETURNS bigint
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -207,7 +207,7 @@ LANGUAGE C STRICT;
 REVOKE ALL ON FUNCTION pgexporter_ext_free_space FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pgexporter_ext_free_space TO pg_monitor;
 
-DROP FUNCTION pgexporter_total_space;
+DROP FUNCTION IF EXISTS pgexporter_total_space CASCADE;
 CREATE FUNCTION pgexporter_ext_total_space(IN dir text) RETURNS bigint
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
