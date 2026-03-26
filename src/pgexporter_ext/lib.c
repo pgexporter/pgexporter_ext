@@ -292,7 +292,7 @@ pgexporter_ext_information(PG_FUNCTION_ARGS)
 }
 
 Datum
-pgexporter_ext_version_ext(PG_FUNCTION_ARGS)
+pgexporter_ext_version(PG_FUNCTION_ARGS)
 {
    Datum version;
    char v[1024];
