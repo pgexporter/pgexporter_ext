@@ -3,32 +3,33 @@ name: CI
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
     branches:
-    - main
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    
+    container:
+      image: rockylinux/rockylinux:10
     steps:
-    - uses: actions/checkout@v1
-    - name: Update system
-      run: sudo apt update -y
-    - name: Install gcc-9
-      run: sudo apt install -y gcc-9
-    - name: Install PostgreSQL
-      run: sudo apt install -y postgresql-server-dev-all
-    - name: Update alternatives
-      run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60
-    - name: mkdir
-      run: mkdir build
-      working-directory: /home/runner/work/pgexporter/pgexporter_ext/
-    - name: cmake
-      run: cmake -DCMAKE_BUILD_TYPE=Release ..
-      working-directory: /home/runner/work/pgexporter/pgexporter_ext/build/
-    - name: make
-      run: make
-      working-directory: /home/runner/work/pgexporter/pgexporter_ext/build/
+      - uses: actions/checkout@v1
+      - name: Install dependencies
+        run: |
+          dnf -y install dnf-plugins-core
+          dnf config-manager --set-enabled crb
+          dnf -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+          dnf -y install \
+            gcc cmake make \
+            zlib-devel bzip2-devel lz4-devel libzstd-devel \
+            postgresql-server-devel
+      - name: mkdir
+        run: mkdir build
+        working-directory: ${{ github.workspace }}
+      - name: cmake
+        run: cmake -DCMAKE_C_FLAGS="-I/usr/include/pgsql" -DCMAKE_BUILD_TYPE=Release ..
+        working-directory: ${{ github.workspace }}/build/
+      - name: make
+        run: make
+        working-directory: ${{ github.workspace }}/build/
