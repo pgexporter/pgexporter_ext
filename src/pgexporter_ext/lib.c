@@ -44,6 +44,10 @@
 #endif
 #include <sys/types.h>
 
+/* OpenSSL */
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+
 /* PostgreSQL */
 #include "postgres.h"
 #include "server/fmgr.h"
@@ -114,7 +118,7 @@ static void     get_file_value(char* filename, char* interface, int64_t* value);
 static void     load_avg(Tuplestorestate* tupstore, TupleDesc tupdesc);
 static int cache_refresh_interval = 300;
 
-#define NUMBER_OF_FUNCTIONS 11
+#define NUMBER_OF_FUNCTIONS 12
 #define NUMBER_OF_LOG_FUNCTIONS 12
 __attribute__((used))
 static struct function
@@ -160,6 +164,7 @@ static struct function functions[] = {
    {"pgexporter_ext_memory_info", false, "The memory information", "gauge"},
    {"pgexporter_ext_network_info", false, "The network information", "gauge"},
    {"pgexporter_ext_load_avg", false, "The load averages", "gauge"},
+   {"pgexporter_ext_fips", false, "PostgreSQL OpenSSL FIPS mode status", "gauge"},
 };
 
 static struct function log_metrics[] = {
@@ -216,6 +221,8 @@ PG_FUNCTION_INFO_V1(pgexporter_ext_memory_info);
 PG_FUNCTION_INFO_V1(pgexporter_ext_network_info);
 
 PG_FUNCTION_INFO_V1(pgexporter_ext_load_avg);
+
+PG_FUNCTION_INFO_V1(pgexporter_ext_fips);
 
 PG_FUNCTION_INFO_V1(pgexporter_ext_log_debug5);
 PG_FUNCTION_INFO_V1(pgexporter_ext_log_debug4);
@@ -557,6 +564,22 @@ pgexporter_ext_load_avg(PG_FUNCTION_ARGS)
    load_avg(tupstore, tupdesc);
 
    return (Datum)0;
+}
+
+Datum
+pgexporter_ext_fips(PG_FUNCTION_ARGS)
+{
+   int fips_enabled = 0;
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+   /* OpenSSL 3.0+ */
+   fips_enabled = EVP_default_properties_is_fips_enabled(NULL);
+#elif OPENSSL_VERSION_NUMBER >= 0x10100000L
+   /* OpenSSL 1.1.0+ */
+   fips_enabled = FIPS_mode();
+#endif
+
+   PG_RETURN_BOOL(fips_enabled == 1);
 }
 
 static void

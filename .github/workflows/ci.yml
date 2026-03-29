@@ -23,6 +23,7 @@ jobs:
           dnf -y install \
             gcc cmake make \
             zlib-devel bzip2-devel lz4-devel libzstd-devel \
+            openssl-devel \
             postgresql-server-devel
       - name: mkdir
         run: mkdir build
