@@ -11,6 +11,7 @@
 * Network information
 * Load average metrics
 * Disk space metrics
+* FIPS mode detection
 
 See [Getting Started](./doc/GETTING_STARTED.md) on how to get started with `pgexporter_ext`.
 
@@ -20,18 +21,21 @@ See [Getting Started](./doc/GETTING_STARTED.md) on how to get started with `pgex
 * [Fedora](https://getfedora.org/) 32+
 * [RHEL](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) 8.x with
   [AppStream](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/installing_managing_and_removing_user-space_components/using-appstream_using-appstream)
+* [Rocky Linux](https://rockylinux.org/) 10
 
 ## Compiling the source
 
-`pgexporter` requires
+`pgexporter_ext` requires
 
 * [gcc 8+](https://gcc.gnu.org) (C17)
 * [cmake](https://cmake.org)
 * [make](https://www.gnu.org/software/make/)
 * [PostgreSQL](https://www.postgresql.org/)
+* [OpenSSL](https://www.openssl.org/) 1.1+
 
 ```sh
 dnf install git gcc cmake make postgresql-devel zlib zlib-devel libzstd libzstd-devel lz4 lz4-devel bzip2 bzip2-devel libpq-devel libpq openssl-devel
+```
 
 **NOTE**: It may happen that build fails due to `"postgres.h"` not being found. In that case, uninstall the package `postgresql-devel` and instead install `postgresql-server-devel`:
 

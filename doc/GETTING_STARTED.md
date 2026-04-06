@@ -10,7 +10,7 @@ ls `pg_config --libdir`/pgexporter_ext*
 You should see
 
 ```
-/path/to/postgresql/lib/pgexporter_ext.so  /path/to/postgresql/lib/pgexporter_ext.so.0.3.0
+/path/to/postgresql/lib/pgexporter_ext.so  /path/to/postgresql/lib/pgexporter_ext.so.0.3.1
 ```
 
 If you don't have `pgexporter_ext` installed see [README](../README.md) on how to
@@ -43,7 +43,7 @@ of [pgexporter_ext](https://github.com/pgexporter/pgexporter_ext).
 
 ## Closing
 
-The [pgexporter](https://github.com/pgexporter/pgexporter_ext) community hopes that you find
+The [pgexporter_ext](https://github.com/pgexporter/pgexporter_ext) community hopes that you find
 the project interesting.
 
 Feel free to
