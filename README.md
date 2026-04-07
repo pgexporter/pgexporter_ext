@@ -34,7 +34,7 @@ See [Getting Started](./doc/GETTING_STARTED.md) on how to get started with `pgex
 * [OpenSSL](https://www.openssl.org/) 1.1+
 
 ```sh
-dnf install git gcc cmake make postgresql-devel zlib zlib-devel libzstd libzstd-devel lz4 lz4-devel bzip2 bzip2-devel libpq-devel libpq openssl-devel
+dnf install gcc cmake make zlib-devel bzip2-devel lz4-devel libzstd-devel openssl-devel postgresql-devel
 ```
 
 **NOTE**: It may happen that build fails due to `"postgres.h"` not being found. In that case, uninstall the package `postgresql-devel` and instead install `postgresql-server-devel`:
