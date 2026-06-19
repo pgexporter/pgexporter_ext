@@ -32,6 +32,7 @@
 
 /* system */
 #include <ctype.h>
+#include <dirent.h>
 #include <ifaddrs.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -817,7 +818,7 @@ cpu_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
       values[CPU_INFO_VENDOR] = CStringGetTextDatum(vendor_id);
       values[CPU_INFO_MODEL] = CStringGetTextDatum(model_name);
       values[CPU_INFO_CORES] = Int32GetDatum(cpu_cores);
-      values[CPU_INFO_CLOCK_SPEED] = Int64GetDatumFast(cpu_freq);
+      values[CPU_INFO_CLOCK_SPEED] = Int64GetDatum(cpu_freq);
       values[CPU_INFO_CACHEL1D] = Int32GetDatum(l1dcache_size_kb);
       values[CPU_INFO_CACHEL1I] = Int32GetDatum(l1icache_size_kb);
       values[CPU_INFO_CACHEL2] = Int32GetDatum(l2cache_size_kb);
@@ -966,13 +967,13 @@ memory_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
 
       fclose(memory_file);
 
-      values[MEMORY_INFO_TOTAL_MEMORY] = Int64GetDatumFast(total_memory_bytes);
-      values[MEMORY_INFO_USED_MEMORY] = Int64GetDatumFast(used_memory_bytes);
-      values[MEMORY_INFO_FREE_MEMORY] = Int64GetDatumFast(free_memory_bytes);
-      values[MEMORY_INFO_SWAP_TOTAL] = Int64GetDatumFast(swap_total_bytes);
-      values[MEMORY_INFO_SWAP_USED] = Int64GetDatumFast(swap_used_bytes);
-      values[MEMORY_INFO_SWAP_FREE] = Int64GetDatumFast(swap_free_bytes);
-      values[MEMORY_INFO_CACHE_TOTAL] = Int64GetDatumFast(cached_bytes);
+      values[MEMORY_INFO_TOTAL_MEMORY] = Int64GetDatum(total_memory_bytes);
+      values[MEMORY_INFO_USED_MEMORY] = Int64GetDatum(used_memory_bytes);
+      values[MEMORY_INFO_FREE_MEMORY] = Int64GetDatum(free_memory_bytes);
+      values[MEMORY_INFO_SWAP_TOTAL] = Int64GetDatum(swap_total_bytes);
+      values[MEMORY_INFO_SWAP_USED] = Int64GetDatum(swap_used_bytes);
+      values[MEMORY_INFO_SWAP_FREE] = Int64GetDatum(swap_free_bytes);
+      values[MEMORY_INFO_CACHE_TOTAL] = Int64GetDatum(cached_bytes);
 
       tuplestore_putvalues(tupstore, tupdesc, values, nulls);
    }
@@ -1108,15 +1109,15 @@ network_info(Tuplestorestate* tupstore, TupleDesc tupdesc)
 
          values[NETWORK_INFO_INTERFACE_NAME] = CStringGetTextDatum(interface_name);
          values[NETWORK_INFO_IP_ADDRESS] = CStringGetTextDatum(ipv4_address);
-         values[NETWORK_INFO_TX_BYTES] = Int64GetDatumFast(tx_bytes);
-         values[NETWORK_INFO_TX_PACKETS] = Int64GetDatumFast(tx_packets);
-         values[NETWORK_INFO_TX_ERRORS] = Int64GetDatumFast(tx_errors);
-         values[NETWORK_INFO_TX_DROPPED] = Int64GetDatumFast(tx_dropped);
-         values[NETWORK_INFO_RX_BYTES] = Int64GetDatumFast(rx_bytes);
-         values[NETWORK_INFO_RX_PACKETS] = Int64GetDatumFast(rx_packets);
-         values[NETWORK_INFO_RX_ERRORS] = Int64GetDatumFast(rx_errors);
-         values[NETWORK_INFO_RX_DROPPED] = Int64GetDatumFast(rx_dropped);
-         values[NETWORK_INFO_LINK_SPEED] = Int64GetDatumFast(speed_mbps);
+         values[NETWORK_INFO_TX_BYTES] = Int64GetDatum(tx_bytes);
+         values[NETWORK_INFO_TX_PACKETS] = Int64GetDatum(tx_packets);
+         values[NETWORK_INFO_TX_ERRORS] = Int64GetDatum(tx_errors);
+         values[NETWORK_INFO_TX_DROPPED] = Int64GetDatum(tx_dropped);
+         values[NETWORK_INFO_RX_BYTES] = Int64GetDatum(rx_bytes);
+         values[NETWORK_INFO_RX_PACKETS] = Int64GetDatum(rx_packets);
+         values[NETWORK_INFO_RX_ERRORS] = Int64GetDatum(rx_errors);
+         values[NETWORK_INFO_RX_DROPPED] = Int64GetDatum(rx_dropped);
+         values[NETWORK_INFO_LINK_SPEED] = Int64GetDatum(speed_mbps);
 
          tuplestore_putvalues(tupstore, tupdesc, values, nulls);
       }
